@@ -2,7 +2,9 @@
 Class to capture all relevant recordings, annotations, and subject info from the PSG
 '''
 
+import pyedflib
 import pandas as pd
+from lxml import etree
 
 class Recording():
     def __init__(self, subject_id, subject_info=None):
@@ -14,10 +16,10 @@ class Recording():
         path_annot   = path_dataset + f'polysomnography/annotations-events-nsrr/mesa-sleep-{subject_id:04}-nsrr.xml'
         path_subject = path_dataset + 'datasets/mesa-sleep-harmonized-dataset-0.7.0.csv'
 
-        self.psg = self.load_psg(path_psg)
-        self.rpoints = self.load_rpoints(path_rpoint)
-        self.annotations = self.load_annotations(path_annot)
-        self.subject_data = self.load_subject_data(path_subject, subject_id, subject_info)
+        self.load_psg(path_psg)
+        self.load_rpoints(path_rpoint)
+        self.load_annotations(path_annot)
+        self.load_subject_data(path_subject, subject_id, subject_info)
     
     def get_subject_info(self):
         pass
@@ -37,14 +39,38 @@ class Recording():
     def look_at(self, sec):
         pass
 
-    def load_psg(self, path_psg):
-        pass
+    def load_psg(self, path_psg, signals_to_read=['HR', 'SpO2', 'Pleth']):
+        edf_reader = pyedflib.EdfReader(path_psg)
+
+        signal_labels = edf_reader.getSignalLabels()
+
+        self.psg = {}
+        for i in range(edf_reader.signals_in_file):
+            if signal_labels[i] in signals_to_read:
+                self.psg[signal_labels[i]] = pd.Series(edf_reader.readSignal(i))
+        
+        edf_reader.close()
 
     def load_rpoints(self, path_rpoint):
         pass
 
     def load_annotations(self, path_annot):
-        pass
+        all_events = etree.parse(path_annot).getroot().xpath("//ScoredEvent")
+
+        event_categories = {
+            None: [],  # Recording Start
+            'Respiratory|Respiratory': [],
+            'Arousals|Arousals': [],
+            'Limb Movement|Limb Movement': [],
+            'Stages|Stages': []
+        }
+
+        for event in all_events:
+            for child in event:
+                if child.tag == 'EventType':
+                    event_categories[child.text].append(Event(event))
+        
+        recording_start = recording_start[0]['ClockTime']
 
     def load_subject_data(self, path_subject, subject_id, subject_info):
         if subject_info is None:
@@ -52,7 +78,7 @@ class Recording():
             all_subjects.set_index('mesaid', inplace=True)
             subject_info = all_subjects.loc[subject_id]
         
-        return {
+        self.subject_data = {
             'age': subject_info.loc['nsrr_age'],
             'bmi': subject_info.loc['nsrr_bmi'],
             'sex': subject_info.loc['nsrr_sex'],
@@ -60,6 +86,15 @@ class Recording():
             'cur_smoker': subject_info.loc['nsrr_current_smoker'],
             'ever_smoked': subject_info.loc['nsrr_ever_smoker']
         }
+
+
+class Event():  # TODO!
+    def __init__(self, event):
+        obj = {}
+        for child in event:
+            if not child.tag == 'EventType':
+                obj[child.tag] = child.text
+        return obj
 
 ### EDF Files (/vol/sleepstudy/datasets/mesa/polysomnography/edfs/mesa-sleep-0001.edf)
 

@@ -22,7 +22,7 @@ class Recording():
         self.load_subject_data(path_subject, subject_id, subject_info)
     
     def get_subject_info(self):
-        pass
+        return self.subject_data
 
     def get_total_time(self):
         pass
@@ -52,25 +52,16 @@ class Recording():
         edf_reader.close()
 
     def load_rpoints(self, path_rpoint):
-        pass
+        pass  # TODO Can I use them?
 
     def load_annotations(self, path_annot):
         all_events = etree.parse(path_annot).getroot().xpath("//ScoredEvent")
 
-        event_categories = {
-            None: [],  # Recording Start
-            'Respiratory|Respiratory': [],
-            'Arousals|Arousals': [],
-            'Limb Movement|Limb Movement': [],
-            'Stages|Stages': []
-        }
+        self.events = []
+        self.sleep_stages = []
 
         for event in all_events:
-            for child in event:
-                if child.tag == 'EventType':
-                    event_categories[child.text].append(Event(event))
-        
-        recording_start = recording_start[0]['ClockTime']
+            self.handle_event(to_obj(event))
 
     def load_subject_data(self, path_subject, subject_id, subject_info):
         if subject_info is None:
@@ -85,73 +76,47 @@ class Recording():
             'race': subject_info.loc['nsrr_race'],
             'cur_smoker': subject_info.loc['nsrr_current_smoker'],
             'ever_smoked': subject_info.loc['nsrr_ever_smoker']
-        }
-
-
-class Event():  # TODO!
-    def __init__(self, event):
-        obj = {}
-        for child in event:
-            if not child.tag == 'EventType':
-                obj[child.tag] = child.text
-        return obj
-
-### EDF Files (/vol/sleepstudy/datasets/mesa/polysomnography/edfs/mesa-sleep-0001.edf)
-
-def load_psg(path):
-    edf_reader = pyedflib.EdfReader(path)
-
-    signal_labels = edf_reader.getSignalLabels()
-
-    signals = {}
-    for i in range(edf_reader.signals_in_file):
-        signals[signal_labels[i]] = pd.Series(edf_reader.readSignal(i))
+        }     
     
-    edf_reader.close()
-    return signals
+    def handle_event(self, event):
 
-### R-Point CSV Files (/vol/sleepstudy/datasets/mesa/polysomnography/annotations-rpoints/mesa-sleep-0001-rpoint.csv)
+        # Recording Start
+        if event['EventType'] == None:
+            self.recording_start = event['ClockTime']
+        
+        # Respiratory Events or Arousals
+        elif event['EventType'] in ['Respiratory|Respiratory', 'Arousals|Arousals']:
+            self.events.append(Event(event))
+            
+        # Stages
+        elif event['EventType'] == 'Stages|Stages':
+            stage = int(event['EventConcept'].split('|')[1])
+            self.sleep_stages += [stage]*int(event['Duration'].split('.')[0])
 
-def load_rpoint(path):
-    df = pd.read_csv(path)
-    return df
+class Event():
+    def __init__(self, event):
+        self.type = event['EventConcept'].split('|')[0]
+        self.start = float(event['Start'])
+        self.duration = float(event['Duration'])
+        self.end = self.start + self.duration
 
-### NSRR Annotation Files (/vol/sleepstudy/datasets/mesa/polysomnography/annotations-events-nsrr/mesa-sleep-0001-nsrr.xml)
+        # TODO needed?
+        self.location = event['SignalLocation']
+        self.SpO2Nadir = event['SpO2Nadir'] if 'SpO2Nadir' in event.keys() else None
+        self.SpO2Baseline = event['SpO2Baseline'] if 'SpO2Baseline' in event.keys() else None
+    
+    def __str__(self):
+        SpO2 = '' if self.SpO2Nadir is None else f' ({self.SpO2Nadir}, base {self.SpO2Baseline})'
+        return f'[{to_clock(self.start)}, {to_clock(self.end)}] {self.type} at {self.location}{SpO2}'
 
 def to_obj(event):
     obj = {}
     for child in event:
-        if not child.tag == 'EventType':
-            obj[child.tag] = child.text
+        obj[child.tag] = child.text
     return obj
 
-def load_annotations(path):
-    tree = etree.parse(path)
-    root = tree.getroot()
-    all_events = root.xpath("//ScoredEvent")
-
-    recording_start = []
-    events_respiratory = []
-    events_arousals = []
-    events_limb_movements = []
-    events_stages = []
-
-    event_categories = {
-        None: recording_start,
-        'Respiratory|Respiratory': events_respiratory,
-        'Arousals|Arousals': events_arousals,
-        'Limb Movement|Limb Movement': events_limb_movements,
-        'Stages|Stages': events_stages
-    }
-
-    for event in all_events:
-        for child in event:
-            if child.tag == 'EventType':
-                event_categories[child.text].append(to_obj(event))
-    
-    recording_start = recording_start[0]['ClockTime']
-    return recording_start, \
-        pd.DataFrame(events_respiratory), \
-        pd.DataFrame(events_arousals), \
-        pd.DataFrame(events_limb_movements), \
-        pd.DataFrame(events_stages)
+def to_clock(sec):
+    sec = int(sec)
+    m, s = divmod(sec, 60)
+    h, m = divmod(m, 60)
+    return f'{h:02}:{m:02}:{s:02}'

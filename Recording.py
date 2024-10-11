@@ -5,6 +5,7 @@ Class to capture all relevant recordings, annotations, and subject info from the
 import pyedflib
 import pandas as pd
 from lxml import etree
+import matplotlib.pyplot as plt
 
 class Recording():
     def __init__(self, subject_id, subject_info=None):
@@ -20,12 +21,11 @@ class Recording():
         self.load_rpoints(path_rpoint)
         self.load_annotations(path_annot)
         self.load_subject_data(path_subject, subject_id, subject_info)
+
+        self.post_process()
     
     def get_subject_info(self):
         return self.subject_data
-
-    def get_total_time(self):
-        pass
 
     def get_event_count(self, event):
         pass
@@ -36,10 +36,42 @@ class Recording():
     def get_ahi(self):
         pass
 
-    def look_at(self, sec):
-        pass
+    def look_at(self, time=None, window_size=None):
+        if time is None:
+            start, end = 0, len(self.hypnogram)
+        elif type(time) == int:
+            start, end = time-window_size, time+window_size
+        
+        # Create a figure and 3 subplots stacked vertically
+        fig, axs = plt.subplots(3, 1, figsize=(20, 6), sharex=True)
 
-    def load_psg(self, path_psg, signals_to_read=['HR', 'SpO2', 'Pleth']):
+        # Plotting the first series (Hypnogram)
+        axs[0].plot(self.hypnogram[start:end], color='blue')
+        axs[0].set_ylabel('Sleep Stage')
+        axs[0].legend(['Hypnogram'], loc='upper right')
+
+        # Plotting the second series (Heart Rate)
+        axs[1].plot(self.psg['HR'][start:end], color='red')
+        axs[1].set_ylabel('BPS')
+        axs[1].legend(['Heart Rate'], loc='upper right')
+
+        # Plotting the third series (SpO2)
+        axs[2].plot(self.psg['SpO2'][start:end], color='green')
+        axs[2].set_ylabel('Saturation (%)')
+        axs[2].legend(['SpO2'], loc='upper right')
+
+        # Highlight events
+        for event in self.events:
+            if event.start >= start and event.end <= end:
+                for i in range(3):
+                    axs[i].axvspan(event.start, event.end, facecolor=event_colors[event.type], alpha=0.5)
+
+        axs[2].set_xlabel('Time (s)')
+        plt.xticks(range(start, end, int((end-start)/20)))
+        plt.tight_layout()
+        plt.show()
+
+    def load_psg(self, path_psg, signals_to_read=['HR', 'SpO2']):  #, 'Pleth'
         edf_reader = pyedflib.EdfReader(path_psg)
 
         signal_labels = edf_reader.getSignalLabels()
@@ -58,7 +90,7 @@ class Recording():
         all_events = etree.parse(path_annot).getroot().xpath("//ScoredEvent")
 
         self.events = []
-        self.sleep_stages = []
+        self.hypnogram = pd.Series(0, index=range(16*60*60))  # Empty Hypnogram of 16 hours
 
         for event in all_events:
             self.handle_event(to_obj(event))
@@ -91,11 +123,31 @@ class Recording():
         # Stages
         elif event['EventType'] == 'Stages|Stages':
             stage = int(event['EventConcept'].split('|')[1])
-            self.sleep_stages += [stage]*int(event['Duration'].split('.')[0])
+            start = int(float(event['Start']))
+            end = start + int(float(event['Duration']))
+            self.hypnogram[start:end] = stage
+    
+    def post_process(self):
+        ''' Do postprocessing after loading
+        - Calculate total sleep time (TST)
+        - Cut off the awake phase at the end
+        - (TODO) Downsample ">1Hz" signals
+        '''
+
+        awake_phases = self.hypnogram[self.hypnogram != 0]
+        self.total_sleep_time = len(awake_phases)
+
+        end_point = awake_phases.index[-1]+10
+        self.hypnogram = self.hypnogram[0:end_point]
+        for signal in self.psg.keys():
+            self.psg[signal] = self.psg[signal][0:end_point]
+
+            # TODO Are these mistakes?
+            self.psg[signal][self.psg[signal] == 0] = None
 
 class Event():
     def __init__(self, event):
-        self.type = event['EventConcept'].split('|')[0]
+        self.type = event['EventConcept'].split('|')[0]  # SpO2 desaturation, Hypopnea, Unsure, Obstructive apnea, SpO2 artifact, Arousal
         self.start = float(event['Start'])
         self.duration = float(event['Duration'])
         self.end = self.start + self.duration
@@ -120,3 +172,12 @@ def to_clock(sec):
     m, s = divmod(sec, 60)
     h, m = divmod(m, 60)
     return f'{h:02}:{m:02}:{s:02}'
+
+event_colors = {
+    'SpO2 desaturation': 'gold',
+    'Hypopnea':          'magenta',
+    'Unsure':            'grey',
+    'Obstructive apnea': 'purple',
+    'SpO2 artifact':     'cyan',
+    'Arousal':           'lime'
+}

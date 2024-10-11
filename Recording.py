@@ -6,6 +6,8 @@ import pyedflib
 import pandas as pd
 from lxml import etree
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from matplotlib.ticker import FuncFormatter
 
 class Recording():
     def __init__(self, subject_id, subject_info=None):
@@ -41,6 +43,9 @@ class Recording():
             start, end = 0, len(self.hypnogram)
         elif type(time) == int:
             start, end = time-window_size, time+window_size
+        elif type(time) == str:
+            time, window_size = from_clock(time), from_clock(window_size)
+            start, end = time-window_size, time+window_size
         
         # Create a figure and 3 subplots stacked vertically
         fig, axs = plt.subplots(3, 1, figsize=(20, 6), sharex=True)
@@ -58,15 +63,24 @@ class Recording():
         # Plotting the third series (SpO2)
         axs[2].plot(self.psg['SpO2'][start:end], color='green')
         axs[2].set_ylabel('Saturation (%)')
-        axs[2].legend(['SpO2'], loc='upper right')
+        final_legend = axs[2].legend(['SpO2'], loc='upper right')
 
         # Highlight events
+        event_types = {}
         for event in self.events:
             if event.start >= start and event.end <= end:
+                event_types[event.type] = 0
                 for i in range(3):
-                    axs[i].axvspan(event.start, event.end, facecolor=event_colors[event.type], alpha=0.5)
+                    axs[i].axvspan(event.start, event.end, facecolor=event_colors[event.type], alpha=0.33)
 
-        axs[2].set_xlabel('Time (s)')
+        patches = []
+        for event_type in sorted(list(event_types.keys())):
+            patches.append(mpatches.Patch(color=event_colors[event_type], alpha=0.33, label=event_type))
+        plt.legend(handles=patches, loc='lower right', ncols=len(patches))
+        axs[2].add_artist(final_legend)
+
+        axs[2].xaxis.set_major_formatter(FuncFormatter(lambda x, _: to_clock(int(x))))
+        axs[2].set_xlabel('Time')
         plt.xticks(range(start, end, int((end-start)/20)))
         plt.tight_layout()
         plt.show()
@@ -171,7 +185,11 @@ def to_clock(sec):
     sec = int(sec)
     m, s = divmod(sec, 60)
     h, m = divmod(m, 60)
-    return f'{h:02}:{m:02}:{s:02}'
+    return f'{h:02}:{m:02}:{s:02}\n({sec})'
+
+def from_clock(clock):
+    h, m, s = map(int, clock.split(':'))
+    return h*60*60 + m*60 + s
 
 event_colors = {
     'SpO2 desaturation': 'gold',

@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.ticker import FuncFormatter
 
+EVENT_TYPES = ['SpO2 desaturation', 'Hypopnea', 'Unsure', 'Obstructive apnea', 'SpO2 artifact', 'Arousal']
+
 class Recording():
     def __init__(self, subject_id, subject_info=None):
         self.id = subject_id
@@ -29,14 +31,15 @@ class Recording():
     def get_subject_info(self):
         return self.subject_data
 
-    def get_event_count(self, event):
-        pass
+    def get_event_count(self, event_type):
+        return len(self.get_events(event_type))
 
-    def get_events(self, event):
-        pass
+    def get_events(self, event_type):
+        event_types = event_type if type(event_type) is list else [event_type]
+        return list(filter(lambda event: event.type in event_types, self.events))
 
     def get_ahi(self):
-        pass
+        return self.get_event_count(['Hypopnea', 'Obstructive apnea']) / (self.total_sleep_time_in_sec / 60 / 60)
 
     def look_at(self, time=None, window_size=None):
         if time is None:
@@ -122,7 +125,8 @@ class Recording():
             'race': subject_info.loc['nsrr_race'],
             'cur_smoker': subject_info.loc['nsrr_current_smoker'],
             'ever_smoked': subject_info.loc['nsrr_ever_smoker']
-        }     
+        }
+        self.bla = subject_info # TODO delete this
     
     def handle_event(self, event):
 
@@ -149,7 +153,7 @@ class Recording():
         '''
 
         awake_phases = self.hypnogram[self.hypnogram != 0]
-        self.total_sleep_time = len(awake_phases)
+        self.total_sleep_time_in_sec = len(awake_phases)
 
         end_point = awake_phases.index[-1]+10
         self.hypnogram = self.hypnogram[0:end_point]

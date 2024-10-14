@@ -9,7 +9,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.ticker import FuncFormatter
 
-EVENT_TYPES = ['SpO2 desaturation', 'Hypopnea', 'Unsure', 'Obstructive apnea', 'SpO2 artifact', 'Arousal']
+from wearsed.dataset.Event import Event
+from wearsed.dataset.utils import from_clock, to_clock, to_obj, EVENT_COLORS
 
 class Recording():
     def __init__(self, subject_id, subject_info=None):
@@ -74,11 +75,11 @@ class Recording():
             if event.start >= start and event.end <= end:
                 event_types[event.type] = 0
                 for i in range(3):
-                    axs[i].axvspan(event.start, event.end, facecolor=event_colors[event.type], alpha=0.33)
+                    axs[i].axvspan(event.start, event.end, facecolor=EVENT_COLORS[event.type], alpha=0.33)
 
         patches = []
         for event_type in sorted(list(event_types.keys())):
-            patches.append(mpatches.Patch(color=event_colors[event_type], alpha=0.33, label=event_type))
+            patches.append(mpatches.Patch(color=EVENT_COLORS[event_type], alpha=0.33, label=event_type))
         plt.legend(handles=patches, loc='lower right', ncols=len(patches))
         axs[2].add_artist(final_legend)
 
@@ -162,44 +163,3 @@ class Recording():
 
             # TODO Are these mistakes?
             self.psg[signal][self.psg[signal] == 0] = None
-
-class Event():
-    def __init__(self, event):
-        self.type = event['EventConcept'].split('|')[0]  # SpO2 desaturation, Hypopnea, Unsure, Obstructive apnea, SpO2 artifact, Arousal
-        self.start = float(event['Start'])
-        self.duration = float(event['Duration'])
-        self.end = self.start + self.duration
-
-        # TODO needed?
-        self.location = event['SignalLocation']
-        self.SpO2Nadir = event['SpO2Nadir'] if 'SpO2Nadir' in event.keys() else None
-        self.SpO2Baseline = event['SpO2Baseline'] if 'SpO2Baseline' in event.keys() else None
-    
-    def __str__(self):
-        SpO2 = '' if self.SpO2Nadir is None else f' ({self.SpO2Nadir}, base {self.SpO2Baseline})'
-        return f'[{to_clock(self.start)}, {to_clock(self.end)}] {self.type} at {self.location}{SpO2}'
-
-def to_obj(event):
-    obj = {}
-    for child in event:
-        obj[child.tag] = child.text
-    return obj
-
-def to_clock(sec):
-    sec = int(sec)
-    m, s = divmod(sec, 60)
-    h, m = divmod(m, 60)
-    return f'{h:02}:{m:02}:{s:02}\n({sec})'
-
-def from_clock(clock):
-    h, m, s = map(int, clock.split(':'))
-    return h*60*60 + m*60 + s
-
-event_colors = {
-    'SpO2 desaturation': 'gold',
-    'Hypopnea':          'magenta',
-    'Unsure':            'grey',
-    'Obstructive apnea': 'purple',
-    'SpO2 artifact':     'cyan',
-    'Arousal':           'lime'
-}

@@ -42,7 +42,7 @@ print(f'  Missing PSG:    {failed_psg}')
 print(f'  Missing RPoint: {failed_rpoint}')
 print(f'  Missing Annot:  {failed_annot}')
 
-available_ids.to_csv('wearsed/dataset/data_ids/mesa_ids.csv')
+available_ids.to_csv('wearsed/dataset/data_ids/mesa_ids.csv', header=False, index=False)
 
 with open('wearsed/dataset/data_ids/mesa_root.txt', 'w') as f:
     f.write(mesa_root)

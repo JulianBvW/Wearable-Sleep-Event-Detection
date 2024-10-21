@@ -3,6 +3,7 @@ Class to capture all relevant recordings, annotations, and subject info from the
 '''
 
 import pyedflib
+import numpy as np
 import pandas as pd
 from lxml import etree
 import matplotlib.pyplot as plt
@@ -10,7 +11,7 @@ import matplotlib.patches as mpatches
 from matplotlib.ticker import FuncFormatter
 
 from wearsed.dataset.Event import Event
-from wearsed.dataset.utils import from_clock, to_clock, to_obj, EVENT_COLORS
+from wearsed.dataset.utils import from_clock, to_clock, to_obj, EVENT_COLORS, EVENT_TYPES
 
 class Recording():
     def __init__(self, subject_id, subject_info=None):
@@ -22,7 +23,7 @@ class Recording():
         path_annot   = path_dataset + f'polysomnography/annotations-events-nsrr/mesa-sleep-{subject_id:04}-nsrr.xml'
         path_subject = path_dataset + 'datasets/mesa-sleep-harmonized-dataset-0.7.0.csv'
 
-        self.load_psg(path_psg)
+        self.load_psg(path_psg, signals_to_read=['HR', 'SpO2', 'Flow'])
         self.load_rpoints(path_rpoint)
         self.load_annotations(path_annot)
         self.load_subject_data(path_subject, subject_id, subject_info)
@@ -42,7 +43,7 @@ class Recording():
     def get_ahi(self):
         return self.get_event_count(['Hypopnea', 'Obstructive apnea']) / (self.total_sleep_time_in_sec / 60 / 60)
 
-    def look_at(self, time=None, window_size=None):
+    def look_at(self, time=None, window_size=None, events=EVENT_TYPES):
         if time is None:
             start, end = 0, len(self.hypnogram)
         elif type(time) == int:
@@ -52,7 +53,7 @@ class Recording():
             start, end = time-window_size, time+window_size
         
         # Create a figure and 3 subplots stacked vertically
-        fig, axs = plt.subplots(3, 1, figsize=(20, 6), sharex=True)
+        fig, axs = plt.subplots(4, 1, figsize=(20, 8), sharex=True)
 
         # Plotting the first series (Hypnogram)
         axs[0].plot(self.hypnogram[start:end], color='blue')
@@ -69,22 +70,28 @@ class Recording():
         axs[2].set_ylabel('Saturation (%)')
         final_legend = axs[2].legend(['SpO2'], loc='upper right')
 
+        flow_time = np.arange(0, len(self.psg['Flow'])) / self.psg_freqs['Flow']
+        flow_start, flow_end = start * self.psg_freqs['Flow'], end * self.psg_freqs['Flow']
+        axs[3].plot(flow_time[flow_start:flow_end], self.psg['Flow'][flow_start:flow_end], color='purple')
+        axs[3].set_ylabel('Flow (Airflow)')
+        axs[3].legend(['Flow'], loc='upper right')
+
         # Highlight events
         event_types = {}
         for event in self.events:
-            if event.start >= start and event.end <= end:
+            if event.type in events and event.start >= start and event.end <= end:
                 event_types[event.type] = 0
-                for i in range(3):
+                for i in range(4):
                     axs[i].axvspan(event.start, event.end, facecolor=EVENT_COLORS[event.type], alpha=0.33)
 
         patches = []
         for event_type in sorted(list(event_types.keys())):
             patches.append(mpatches.Patch(color=EVENT_COLORS[event_type], alpha=0.33, label=event_type))
-        plt.legend(handles=patches, loc='lower right', ncols=len(patches))
+        axs[2].legend(handles=patches, loc='lower right', ncols=len(patches))
         axs[2].add_artist(final_legend)
 
-        axs[2].xaxis.set_major_formatter(FuncFormatter(lambda x, _: to_clock(int(x))))
-        axs[2].set_xlabel('Time')
+        axs[3].xaxis.set_major_formatter(FuncFormatter(lambda x, _: to_clock(int(x))))
+        axs[3].set_xlabel('Time')
         plt.xticks(range(start, end, int((end-start)/20)))
         plt.tight_layout()
         plt.show()
@@ -95,9 +102,11 @@ class Recording():
         signal_labels = edf_reader.getSignalLabels()
 
         self.psg = {}
+        self.psg_freqs = {}
         for i in range(edf_reader.signals_in_file):
             if signal_labels[i] in signals_to_read:
                 self.psg[signal_labels[i]] = pd.Series(edf_reader.readSignal(i))
+                self.psg_freqs[signal_labels[i]] = int(edf_reader.getSampleFrequency(i))
         
         edf_reader.close()
 
@@ -159,7 +168,8 @@ class Recording():
         end_point = awake_phases.index[-1]+10
         self.hypnogram = self.hypnogram[0:end_point]
         for signal in self.psg.keys():
-            self.psg[signal] = self.psg[signal][0:end_point]
+            dyn_end_point = end_point * self.psg_freqs[signal]
+            self.psg[signal] = self.psg[signal][0:dyn_end_point]
 
             # TODO Are these mistakes?
             self.psg[signal][self.psg[signal] == 0] = None

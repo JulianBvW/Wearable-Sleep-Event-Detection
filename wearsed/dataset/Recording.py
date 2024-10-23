@@ -23,7 +23,7 @@ class Recording():
         path_annot   = path_dataset + f'polysomnography/annotations-events-nsrr/mesa-sleep-{subject_id:04}-nsrr.xml'
         path_subject = path_dataset + 'datasets/mesa-sleep-harmonized-dataset-0.7.0.csv'
 
-        self.load_psg(path_psg, signals_to_read=['HR', 'SpO2', 'Flow'])
+        self.load_psg(path_psg, signals_to_read=['HR', 'SpO2', 'Flow', 'Pleth'])
         self.load_rpoints(path_rpoint)
         self.load_annotations(path_annot)
         self.load_subject_data(path_subject, subject_id, subject_info)
@@ -52,46 +52,42 @@ class Recording():
             time, window_size = from_clock(time), from_clock(window_size)
             start, end = time-window_size, time+window_size
         
-        # Create a figure and 3 subplots stacked vertically
-        fig, axs = plt.subplots(4, 1, figsize=(20, 8), sharex=True)
+        signal_count = 1 + len(self.psg.keys())
+        _, axs = plt.subplots(signal_count, 1, figsize=(20, 2 * signal_count), sharex=True)
+        colors = ['blue', 'orange', 'purple', 'green', 'red']
 
-        # Plotting the first series (Hypnogram)
-        axs[0].plot(self.hypnogram[start:end], color='blue')
+        # Plotting the Hypnogram
+        axs[0].plot(self.hypnogram[start:end], color=colors[0])
         axs[0].set_ylabel('Sleep Stage')
         axs[0].legend(['Hypnogram'], loc='upper right')
 
-        # Plotting the second series (Heart Rate)
-        axs[1].plot(self.psg['HR'][start:end], color='red')
-        axs[1].set_ylabel('BPS')
-        axs[1].legend(['Heart Rate'], loc='upper right')
+        # Plotting the PSG signals
+        for i, signal_name in enumerate(self.psg.keys()):
+            signal = self.psg[signal_name]
+            freq = self.psg_freqs[signal_name]
 
-        # Plotting the third series (SpO2)
-        axs[2].plot(self.psg['SpO2'][start:end], color='green')
-        axs[2].set_ylabel('Saturation (%)')
-        final_legend = axs[2].legend(['SpO2'], loc='upper right')
+            timeline = np.arange(0, len(signal)) / freq
+            time_start, time_end = start * freq, end * freq
 
-        flow_time = np.arange(0, len(self.psg['Flow'])) / self.psg_freqs['Flow']
-        flow_start, flow_end = start * self.psg_freqs['Flow'], end * self.psg_freqs['Flow']
-        axs[3].plot(flow_time[flow_start:flow_end], self.psg['Flow'][flow_start:flow_end], color='purple')
-        axs[3].set_ylabel('Flow (Airflow)')
-        axs[3].legend(['Flow'], loc='upper right')
+            axs[i+1].plot(timeline[time_start:time_end], signal[time_start:time_end], color=colors[(i+1) % len(colors)])
+            final_legend = axs[i+1].legend([signal_name], loc='upper right')
 
         # Highlight events
         event_types = {}
         for event in self.events:
             if event.type in events and event.start >= start and event.end <= end:
                 event_types[event.type] = 0
-                for i in range(4):
+                for i in range(signal_count):
                     axs[i].axvspan(event.start, event.end, facecolor=EVENT_COLORS[event.type], alpha=0.33)
 
         patches = []
         for event_type in sorted(list(event_types.keys())):
             patches.append(mpatches.Patch(color=EVENT_COLORS[event_type], alpha=0.33, label=event_type))
-        axs[2].legend(handles=patches, loc='lower right', ncols=len(patches))
-        axs[2].add_artist(final_legend)
+        axs[0].legend(handles=patches, loc='lower right', ncols=len(patches))
+        axs[signal_count-1].add_artist(final_legend)
 
-        axs[3].xaxis.set_major_formatter(FuncFormatter(lambda x, _: to_clock(int(x))))
-        axs[3].set_xlabel('Time')
+        axs[signal_count-1].xaxis.set_major_formatter(FuncFormatter(lambda x, _: to_clock(int(x))))
+        axs[signal_count-1].set_xlabel('Time')
         plt.xticks(range(start, end, int((end-start)/20)))
         plt.tight_layout()
         plt.show()

@@ -5,7 +5,7 @@ Apnea can further be divided into central (the brain fails to send breathing sig
 The gold standard to detecting sleep events is a human-rated PSG (Polysomnography), measuring many signals including brain, eye, muscle, and heart activity, airflow, leg movements, blood oxygen levels, etc.
 Due to the hard and costly setup, an estimated 80% of cases are unrecognized.
 
-This work tries to create a machine learning model, that can precisely detect and classify sleep-related events on wearable, easy-to-use, and comfortable measurement devices like a finger clip that can record SpO2 levels (blood oxygen saturation) and plethysmography (blood vessel volume).
+This work tries to create a machine learning model, that can precisely detect and classify sleep-related events on wearable, easy-to-use, and comfortable measurement devices like a finger clip that can record SpO2 levels (blood oxygen saturation) and photoplethysmography (PPG, blood vessel volume).
 
 ---
 
@@ -24,10 +24,11 @@ In contrast with most literature on the topic, where classification is performed
 - [X] Create dataloader and do first tests with visuals
 - [ ] Read some literature [6/17]
 - [ ] Statistical analyses between events, arousals, demographic data, sleep stages, etc.
-- [ ] Create simple model and training code (for example CNN) to get first results on binary classification (Event vs. No Event) at 1Hz
+- [ ] Create simple model and training code (for example CNN) to get first results on binary classification (Event vs. No Event) at 1 Hz with SpO2, PPG, and GT Hypnogram
 - [ ] Increase complexity for the label by distinguishing between more labels like apnea vs. hypopnea and obstructive vs. central or arousals
 - [ ] Integrate new event scoring data to get central apnea labels (currently missing in the MESA scoring)
 - [ ] Increase model complexity by using different architectures, like Transformers
+- [ ] Transition to PPG-generated hypnogram or sleep-wake-detector instead of ground truth hypnogram
 - [ ] Analyse dependency on singals: Is PPG maybe enough and you can ignore SpO2? Is artigraphy data needed?
 - [ ] Write the paper
 

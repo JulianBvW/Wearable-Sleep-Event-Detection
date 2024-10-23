@@ -14,4 +14,4 @@ class Event():
     
     def __str__(self):
         SpO2 = '' if self.SpO2Nadir is None else f' ({self.SpO2Nadir}, base {self.SpO2Baseline})'
-        return f'[{to_clock(self.start)}, {to_clock(self.end)}] {self.type} at {self.location}{SpO2}'
+        return f'[{to_clock(self.start, detail=False)}, {to_clock(self.end, detail=False)}] {self.type} at {self.location}{SpO2}'

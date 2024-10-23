@@ -83,7 +83,7 @@ class Recording():
         patches = []
         for event_type in sorted(list(event_types.keys())):
             patches.append(mpatches.Patch(color=EVENT_COLORS[event_type], alpha=0.33, label=event_type))
-        axs[0].legend(handles=patches, loc='lower right', ncols=len(patches))
+        axs[signal_count-1].legend(handles=patches, loc='lower right', ncols=len(patches))
         axs[signal_count-1].add_artist(final_legend)
 
         axs[signal_count-1].xaxis.set_major_formatter(FuncFormatter(lambda x, _: to_clock(int(x))))

@@ -8,11 +8,11 @@ def to_obj(event):
         obj[child.tag] = child.text
     return obj
 
-def to_clock(sec):
+def to_clock(sec, detail=True):
     sec = int(sec)
     m, s = divmod(sec, 60)
     h, m = divmod(m, 60)
-    return f'{h:02}:{m:02}:{s:02}\n({sec})'
+    return f'{h:02}:{m:02}:{s:02}\n({sec})' if detail else f'{h:02}:{m:02}:{s:02}'
 
 def from_clock(clock):
     h, m, s = map(int, clock.split(':'))

@@ -1,11 +1,20 @@
 # Wearable-Sleep-Event-Detection
-Detection of Sleep Events using Machine Learning Models on Wearable Sensor Modalities.
+Sleep Apnea is a breathing disorder affecting roughly 10% of the adult population, where breathing can stop periodically during the night, resulting in bad sleep and other side effects.
+These resipiratory events are defined as a complete (>90%, apnea) or partial (>30%, hypopnea) reductions in airflow while sleeping.
+Apnea can further be divided into central (the brain fails to send breathing signals to the muscles) or obstructive (blockage in airway canal) apnea.
+The gold standard to detecting sleep events is a human-rated PSG (Polysomnography), measuring many signals including brain, eye, muscle, and heart activity, airflow, leg movements, blood oxygen levels, etc.
+Due to the hard and costly setup, an estimated 80% of cases are unrecognized.
 
-Bachelor Thesis for the University of Bielefeld.
+This work tries to create a machine learning model, that can precisely detect and classify sleep-related events on wearable, easy-to-use, and comfortable measurement devices like a finger clip that can record SpO2 levels (blood oxygen saturation) and photoplethysmography (PPG, blood vessel volume).
 
-**Description:** After a statistical analysis of the given data to find out relations between demographics data (age, sex, ...), sleep stages and forms of sleep-related events, the goal is to create a Machine Learning Model, for example based on Transformer architectures, that can detect sleep events, like Arousals, (obstructive vs. central) Apneas, or Hypopneas, from a minimal set of sensor modalities that can theoretically be acquired using simple, wearable hardware for home use. In contrast with most literature on the topic, where classification is performed based on epochs of a long duration (e.g. 1 minute), we will explore the use of higher output sampling (e.g. 2 Hz), allowing us to more accurately detect the start and end of each event interval. Performance will be evaluated against events scored based on PSG, both in terms of event detection (sensitivity, positive predictive value, etc) and in terms of agreement with aggregated metrics, such as AHI, arousal index, etc.
+## Task Description
 
-### Installation
+**Detection of Sleep Events using Machine Learning Models on Wearable Sensor Modalities**
+
+After a statistical analysis of the given data to find out relations between demographics data (age, sex, ...), sleep stages and forms of sleep-related events, the goal is to create a Machine Learning Model, for example based on Transformer architectures, that can detect sleep events, like Arousals, (obstructive vs. central) Apneas, or Hypopneas, from a minimal set of sensor modalities that can theoretically be acquired using simple, wearable hardware for home use.
+In contrast with most literature on the topic, where classification is performed based on epochs of a long duration (e.g. 1 minute), we will explore the use of higher output sampling (e.g. 2 Hz), allowing us to more accurately detect the start and end of each event interval. Performance will be evaluated against events scored based on PSG, both in terms of event detection (sensitivity, positive predictive value, etc) and in terms of agreement with aggregated metrics, such as AHI, arousal index, etc.
+
+## Installation
 
 Create a conda environment:
 ```bash
@@ -19,7 +28,21 @@ pip install numpy pandas tqdm pyEDFlib lxml matplotlib torch torchvision torchau
 pip install -e .
 ```
 
-### PSG Signals
+## Roadmap
+
+- [X] Request data access for [MESA](https://sleepdata.org/datasets/mesa) and [CFS](https://sleepdata.org/datasets/cfs) dataset
+- [X] Create dataloader and do first tests with visuals
+- [ ] Read some literature [6/17]
+- [ ] Statistical analyses between events, arousals, demographic data, sleep stages, etc.
+- [ ] Create simple model and training code (for example CNN) to get first results on binary classification (Event vs. No Event) at 1 Hz with SpO2, PPG, and GT Hypnogram
+- [ ] Increase complexity for the label by distinguishing between more labels like apnea vs. hypopnea and obstructive vs. central or arousals
+- [ ] Integrate new event scoring data to get central apnea labels (currently missing in the MESA scoring)
+- [ ] Increase model complexity by using different architectures, like Transformers
+- [ ] Transition to PPG-generated hypnogram or sleep-wake-detector instead of ground truth hypnogram
+- [ ] Analyse dependency on singals: Is PPG maybe enough and you can ignore SpO2? Is artigraphy data needed?
+- [ ] Write the paper
+
+## PSG Signals
 
 Signal | Description | Frequency (Hz) | #Measurements
 --- | --- | --: | --:

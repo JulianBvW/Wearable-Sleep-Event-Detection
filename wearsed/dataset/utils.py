@@ -20,10 +20,11 @@ def from_clock(clock):
 
 EVENT_COLORS = {
     'SpO2 desaturation': 'gold',
-    'Hypopnea':          'magenta',
+    'Hypopnea':          'cyan',
     'Unsure':            'grey',
     'Obstructive apnea': 'purple',
-    'SpO2 artifact':     'cyan',
+    'Central apnea':     'magenta',
+    'SpO2 artifact':     'red',
     'Arousal':           'lime'
 }
 

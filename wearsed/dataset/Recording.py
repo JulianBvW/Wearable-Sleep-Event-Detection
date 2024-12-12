@@ -14,7 +14,7 @@ from wearsed.dataset.Event import Event
 from wearsed.dataset.utils import from_clock, to_clock, to_obj, EVENT_COLORS, EVENT_TYPES
 
 class Recording():
-    def __init__(self, subject_id, subject_info=None):
+    def __init__(self, subject_id, subject_info=None, signals_to_read=['HR', 'SpO2', 'Flow', 'Pleth']):
         self.id = subject_id
 
         path_dataset = '/vol/sleepstudy/datasets/mesa/'
@@ -23,7 +23,7 @@ class Recording():
         path_annot   = path_dataset + f'polysomnography/annotations-events-nsrr/mesa-sleep-{subject_id:04}-nsrr.xml'
         path_subject = path_dataset + 'datasets/mesa-sleep-harmonized-dataset-0.7.0.csv'
 
-        self.load_psg(path_psg, signals_to_read=['HR', 'SpO2', 'Flow', 'Pleth'])
+        self.load_psg(path_psg, signals_to_read=signals_to_read)
         self.load_rpoints(path_rpoint)
         self.load_annotations(path_annot)
         self.load_subject_data(path_subject, subject_id, subject_info)
@@ -40,8 +40,11 @@ class Recording():
         event_types = event_type if type(event_type) is list else [event_type]
         return list(filter(lambda event: event.type in event_types, self.events))
 
-    def get_ahi(self):
-        return self.get_event_count(['Hypopnea', 'Obstructive apnea']) / (self.total_sleep_time_in_sec / 60 / 60)
+    def get_ahi(self):  # Apnea Hypopnea Index
+        return self.get_event_count(['Hypopnea', 'Obstructive apnea', 'Central apnea']) / (self.total_sleep_time_in_sec / 60 / 60)
+
+    def get_ari(self):  # Arousal Index
+        return self.get_event_count(['Arousal']) / (self.total_sleep_time_in_sec / 60 / 60)
 
     def look_at(self, time=None, window_size=None, events=EVENT_TYPES):
         if time is None:
@@ -92,7 +95,7 @@ class Recording():
         plt.tight_layout()
         plt.show()
 
-    def load_psg(self, path_psg, signals_to_read=['HR', 'SpO2']):  #, 'Pleth'
+    def load_psg(self, path_psg, signals_to_read):
         edf_reader = pyedflib.EdfReader(path_psg)
 
         signal_labels = edf_reader.getSignalLabels()
@@ -147,6 +150,8 @@ class Recording():
         # Stages
         elif event['EventType'] == 'Stages|Stages':
             stage = int(event['EventConcept'].split('|')[1])
+            if stage > 5:
+                return
             start = int(float(event['Start']))
             end = start + int(float(event['Duration']))
             self.hypnogram[start:end] = stage
@@ -169,3 +174,4 @@ class Recording():
 
             # TODO Are these mistakes?
             self.psg[signal][self.psg[signal] == 0] = None
+            self.psg[signal] = self.psg[signal].interpolate(limit_direction='both')

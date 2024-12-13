@@ -28,5 +28,5 @@ try:
 except:
     pass
 
-pd.Series(AHIs).to_csv('AHIs.csv', index=False)
-pd.Series(event_durations).to_csv('event_durations.csv', index=False)
+pd.Series(AHIs).to_csv('05_AHIs.csv', index=False)
+pd.Series(event_durations).to_csv('05_event_durations.csv', index=False)

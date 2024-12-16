@@ -171,7 +171,3 @@ class Recording():
         for signal in self.psg.keys():
             dyn_end_point = end_point * self.psg_freqs[signal]
             self.psg[signal] = self.psg[signal][0:dyn_end_point]
-
-            # TODO Are these mistakes?
-            self.psg[signal][self.psg[signal] == 0] = None
-            self.psg[signal] = self.psg[signal].interpolate(limit_direction='both')

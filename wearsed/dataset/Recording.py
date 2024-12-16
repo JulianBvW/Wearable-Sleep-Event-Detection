@@ -11,40 +11,43 @@ import matplotlib.patches as mpatches
 from matplotlib.ticker import FuncFormatter
 
 from wearsed.dataset.Event import Event
-from wearsed.dataset.utils import from_clock, to_clock, to_obj, EVENT_COLORS, EVENT_TYPES
+from wearsed.dataset.utils import from_clock, to_clock, EVENT_COLORS, EVENT_TYPES
 
 class Recording():
-    def __init__(self, subject_id, subject_info=None, signals_to_read=['HR', 'SpO2', 'Flow', 'Pleth']):
+    def __init__(self, subject_id, subject_info=None, signals_to_read=['HR', 'SpO2', 'Flow', 'Pleth'], scoring_from='somnolyzer', events_as_list=False):
         self.id = subject_id
 
-        path_dataset = '/vol/sleepstudy/datasets/mesa/'
+        path_dataset = '/vol/sleepstudy/datasets/mesa/'  # TODO make modular as argument
         path_psg     = path_dataset + f'polysomnography/edfs/mesa-sleep-{subject_id:04}.edf'
-        path_annot   = path_dataset + f'polysomnography/annotations-events-nsrr/mesa-sleep-{subject_id:04}-nsrr.xml'
+        path_scoring = path_dataset + f'scorings/{scoring_from}/'
         path_subject = path_dataset + 'datasets/mesa-sleep-harmonized-dataset-0.7.0.csv'
 
         self.load_psg(path_psg, signals_to_read=signals_to_read)
-        self.load_annotations(path_annot)
+        self.load_scorings(path_scoring, subject_id, events_as_list)
         self.load_subject_data(path_subject, subject_id, subject_info)
 
         self.post_process()
-    
-    def get_subject_info(self):
-        return self.subject_data
 
     def get_event_count(self, event_type):
+        assert len(self.events) > 0, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
         return len(self.get_events(event_type))
 
     def get_events(self, event_type):
+        assert len(self.events) > 0, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
         event_types = event_type if type(event_type) is list else [event_type]
         return list(filter(lambda event: event.type in event_types, self.events))
 
     def get_ahi(self):  # Apnea Hypopnea Index
+        assert len(self.events) > 0, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
         return self.get_event_count(['Hypopnea', 'Obstructive apnea', 'Central apnea']) / (self.total_sleep_time_in_sec / 60 / 60)
 
     def get_ari(self):  # Arousal Index
+        assert len(self.events) > 0, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
         return self.get_event_count(['Arousal']) / (self.total_sleep_time_in_sec / 60 / 60)
 
     def look_at(self, time=None, window_size=None, events=EVENT_TYPES):
+        assert len(self.events) > 0, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
+
         if time is None:
             start, end = 0, len(self.hypnogram)
         elif type(time) == int:
@@ -107,14 +110,15 @@ class Recording():
         
         edf_reader.close()
 
-    def load_annotations(self, path_annot):
-        all_events = etree.parse(path_annot).getroot().xpath("//ScoredEvent")
+    def load_scorings(self, path_scoring, subject_id, events_as_list):
+        self.hypnogram = pd.read_csv(path_scoring + f'hypnogram/hypnogram-{subject_id:04}.csv')['0']
+        self.event_df  = pd.read_csv(path_scoring + f'events/events-{subject_id:04}.csv')
 
         self.events = []
-        self.hypnogram = pd.Series(0, index=range(16*60*60))  # Empty Hypnogram of 16 hours
-
-        for event in all_events:
-            self.handle_event(to_obj(event))
+        if events_as_list:
+            event_list = pd.read_csv(path_scoring + f'event_list/event-list-{subject_id:04}.csv')
+            for _, event in event_list.iterrows():
+                self.events.append(Event((event['Type'], event['Start'], event['End']), direct=True))
 
     def load_subject_data(self, path_subject, subject_id, subject_info):
         if subject_info is None:
@@ -130,26 +134,6 @@ class Recording():
             'cur_smoker': subject_info.loc['nsrr_current_smoker'],
             'ever_smoked': subject_info.loc['nsrr_ever_smoker']
         }
-        self.bla = subject_info # TODO delete this
-    
-    def handle_event(self, event):
-
-        # Recording Start
-        if event['EventType'] == None:
-            self.recording_start = event['ClockTime']
-        
-        # Respiratory Events or Arousals
-        elif event['EventType'] in ['Respiratory|Respiratory', 'Arousals|Arousals']:
-            self.events.append(Event(event))
-            
-        # Stages
-        elif event['EventType'] == 'Stages|Stages':
-            stage = int(event['EventConcept'].split('|')[1])
-            if stage > 5:
-                return
-            start = int(float(event['Start']))
-            end = start + int(float(event['Duration']))
-            self.hypnogram[start:end] = stage
     
     def post_process(self):
         ''' Do postprocessing after loading

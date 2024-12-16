@@ -68,6 +68,7 @@ class Recording():
         # Plotting the PSG signals
         for i, signal_name in enumerate(self.psg.keys()):
             signal = self.psg[signal_name]
+            signal[signal == 0] = None
             freq = self.psg_freqs[signal_name]
 
             timeline = np.arange(0, len(signal)) / freq

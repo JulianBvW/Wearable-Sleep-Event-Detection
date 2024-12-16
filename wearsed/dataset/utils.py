@@ -18,7 +18,48 @@ def from_clock(clock):
     h, m, s = map(int, clock.split(':'))
     return h*60*60 + m*60 + s
 
+
+
+
+EVENT_TYPES = ['OSA', 'CSA', 'MSA', 'HYP', 'ARO']
 EVENT_COLORS = {
+    'OSA': 'purple',
+    'CSA': 'gold',
+    'MSA': 'grey',
+    'HYP': 'cyan',
+    'ARO': 'red'
+}
+
+EVENT_TYPES_NSRR =      ['Obstructive apnea', 'Central apnea', 'Mixed apnea', 'Hypopnea', 'Arousal']
+RESP_EVENT_TYPES_NSRR = ['Obstructive apnea', 'Central apnea', 'Mixed apnea', 'Hypopnea']
+from_nsrr = {
+    'Obstructive apnea': 'OSA',
+    'Central apnea':     'CSA',
+    'Mixed apnea':       'MSA',
+    'Hypopnea':          'HYP',
+    'Arousal':           'ARO'
+}
+
+EVENT_TYPES_SOMNOLYZER =      ['ObstructiveApnea', 'CentralApnea', 'MixedApnea', 'Hypopnea', 'Arousal']
+RESP_EVENT_TYPES_SOMNOLYZER = ['ObstructiveApnea', 'CentralApnea', 'MixedApnea', 'Hypopnea']
+from_somnolyzer = {
+    'ObstructiveApnea': 'OSA',
+    'CentralApnea':     'CSA',
+    'MixedApnea':       'MSA',
+    'Hypopnea':         'HYP',
+    'Arousal':          'ARO'
+}
+
+
+
+
+
+
+
+
+
+
+EVENT_COLORS_old = {
     'SpO2 desaturation': 'gold',
     'Hypopnea':          'cyan',
     'Unsure':            'grey',
@@ -28,4 +69,4 @@ EVENT_COLORS = {
     'Arousal':           'lime'
 }
 
-EVENT_TYPES = list(EVENT_COLORS.keys())
+EVENT_TYPES_old = list(EVENT_COLORS_old.keys())

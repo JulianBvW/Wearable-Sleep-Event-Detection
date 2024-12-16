@@ -3,11 +3,17 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 
+from wearsed.dataset.data_ids.load_scorings import load_scorings_nsrr, load_scorings_somnolyzer
+
 if len(sys.argv) < 3:
     raise Exception('Usage: `load_mesa.py <MESA ROOT PATH> <SCORING [\'nsrr\', \'somnolyzer\']>`')
 mesa_root = sys.argv[1]  # /vol/sleepstudy/datasets/mesa/
 scoring_from = sys.argv[2]  # 'nsrr' or 'somnolyzer'
-
+os.makedirs(mesa_root + 'scorings/', exist_ok=True)
+os.makedirs(mesa_root + 'scorings/' + scoring_from, exist_ok=True)
+os.makedirs(mesa_root + 'scorings/' + scoring_from + '/hypnogram', exist_ok=True)
+os.makedirs(mesa_root + 'scorings/' + scoring_from + '/events', exist_ok=True)
+os.makedirs(mesa_root + 'scorings/' + scoring_from + '/event_list', exist_ok=True)
 
 def is_data_available(subject_id):
     path_psg     = mesa_root + f'polysomnography/edfs/mesa-sleep-{subject_id:04}.edf'
@@ -20,6 +26,7 @@ def is_data_available(subject_id):
 
 label_file = mesa_root + 'datasets/mesa-sleep-harmonized-dataset-0.7.0.csv'
 ids = pd.read_csv(label_file)['mesaid']
+
 
 print('### (1/2) Testing IDs')
 failed = 0
@@ -41,7 +48,9 @@ print(f'  Missing Annot:  {failed_annot}\n')
 
 
 print('### (2/2) Reading Scorings')
-# TODO read scorings
+load_scorings = load_scorings_nsrr if scoring_from == 'nsrr' else load_scorings_somnolyzer
+for id in tqdm(available_ids.values):
+    load_scorings(mesa_root, id)
 
 available_ids.to_csv(f'wearsed/dataset/data_ids/mesa_ids_{scoring_from}.csv', header=False, index=False)
 

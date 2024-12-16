@@ -19,12 +19,10 @@ class Recording():
 
         path_dataset = '/vol/sleepstudy/datasets/mesa/'
         path_psg     = path_dataset + f'polysomnography/edfs/mesa-sleep-{subject_id:04}.edf'
-        path_rpoint  = path_dataset + f'polysomnography/annotations-rpoints/mesa-sleep-{subject_id:04}-rpoint.csv'
         path_annot   = path_dataset + f'polysomnography/annotations-events-nsrr/mesa-sleep-{subject_id:04}-nsrr.xml'
         path_subject = path_dataset + 'datasets/mesa-sleep-harmonized-dataset-0.7.0.csv'
 
         self.load_psg(path_psg, signals_to_read=signals_to_read)
-        self.load_rpoints(path_rpoint)
         self.load_annotations(path_annot)
         self.load_subject_data(path_subject, subject_id, subject_info)
 
@@ -108,9 +106,6 @@ class Recording():
                 self.psg_freqs[signal_labels[i]] = int(edf_reader.getSampleFrequency(i))
         
         edf_reader.close()
-
-    def load_rpoints(self, path_rpoint):
-        pass  # TODO Can I use them?
 
     def load_annotations(self, path_annot):
         all_events = etree.parse(path_annot).getroot().xpath("//ScoredEvent")

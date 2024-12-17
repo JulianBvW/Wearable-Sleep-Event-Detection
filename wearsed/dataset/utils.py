@@ -22,6 +22,7 @@ def from_clock(clock):
 
 
 EVENT_TYPES = ['OSA', 'CSA', 'MSA', 'HYP', 'ARO']
+RESP_EVENT_TYPES = ['OSA', 'CSA', 'MSA', 'HYP']
 EVENT_COLORS = {
     'OSA': 'purple',
     'CSA': 'gold',

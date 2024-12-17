@@ -4,30 +4,33 @@ import torch
 import os
 
 from wearsed.dataset.Recording import Recording
+from wearsed.dataset.utils import RESP_EVENT_TYPES
 
 class WearSEDDataset(Dataset):
-    def __init__(self, mesaid_path='wearsed/dataset/data_ids/', signals_to_read=['HR', 'SpO2', 'Flow', 'Pleth'], preprocess=False):
-        if not os.path.isfile(mesaid_path+'mesa_root.txt') or not os.path.isfile(mesaid_path+'mesa_ids.csv'):
-            raise Exception('MESA IDs not loaded. Run `wearsed/dataset/data_ids/load_mesa.py <MESA ROOT PATH>`.')
+    def __init__(self, mesaid_path='wearsed/dataset/data_ids/', scoring_from='somnolyzer', signals_to_read=['HR', 'SpO2', 'Flow', 'Pleth'], return_recording=False):
+        if not os.path.isfile(mesaid_path + 'mesa_root.txt') or not os.path.isfile(mesaid_path + f'mesa_ids_{scoring_from}.csv'):
+            raise Exception(f'MESA IDs from {scoring_from} not loaded. Run `wearsed/dataset/data_ids/load_mesa.py <MESA ROOT PATH> {scoring_from}`.')
     
-        with open(mesaid_path+'mesa_root.txt', 'r') as f:
+        with open(mesaid_path + 'mesa_root.txt', 'r') as f:
             self.mesa_root = f.readline()
         
-        self.mesa_ids = pd.read_csv(mesaid_path+'mesa_ids.csv', header=None)[0]
+        self.mesa_ids = pd.read_csv(mesaid_path + f'mesa_ids_{scoring_from}.csv', header=None)[0]
         self.subject_infos = pd.read_csv(self.mesa_root + 'datasets/mesa-sleep-harmonized-dataset-0.7.0.csv')
         self.subject_infos.set_index('mesaid', inplace=True)
 
-        self.signals_to_read = signals_to_read
-        self.preprocess = preprocess
+        self.scoring_from     = scoring_from
+        self.signals_to_read  = signals_to_read
+        self.return_recording = return_recording
 
     def __len__(self):
         return len(self.mesa_ids)
 
     def __getitem__(self, idx):
         mesa_id = self.mesa_ids[idx]
-        recording = Recording(mesa_id, self.subject_infos.loc[mesa_id], signals_to_read=self.signals_to_read)
+        subject_info = self.subject_infos.loc[mesa_id]
+        recording = Recording(mesa_id, subject_info, signals_to_read=self.signals_to_read, scoring_from=self.scoring_from, events_as_list=self.return_recording)
 
-        if not self.preprocess:
+        if self.return_recording:
             return recording
         
         ### Preprocesing for Baseline model
@@ -35,20 +38,16 @@ class WearSEDDataset(Dataset):
         # 1 output: Event vs No Event (1Hz)
 
         # Inputs
-        hypnogram = torch.Tensor(recording.hypnogram)
-        spo2 = torch.Tensor(recording.psg['SpO2'])
-        pleth = recording.psg['Pleth']
-        pleth_mean, pleth_std, pleth_min, pleth_max = process_higher_freqs(pleth, 256)  # Convert to 4 inputs at 1Hz
-        smallest = min([len(s) for s in [hypnogram, spo2, pleth_mean, pleth_std, pleth_min, pleth_max]])
-        signals = torch.stack([hypnogram[:smallest], spo2[:smallest], pleth_mean[:smallest], pleth_std[:smallest], pleth_min[:smallest], pleth_max[:smallest]])
+        hypnogram = torch.Tensor(recording.hypnogram).unsqueeze(0)
+        spo2 = torch.Tensor(recording.psg['SpO2']).unsqueeze(0)
+        pleth = torch.Tensor(recording.psg['Pleth'])
+        pleth = pleth.view((256, -1))
+        signals = torch.cat([hypnogram, spo2, pleth])
 
         # Output
-        events_to_look_at = ['Obstructive apnea', 'Hypopnea']
-        event_or_not = torch.zeros(len(hypnogram))
-        for event in recording.get_events(events_to_look_at):
-            event_or_not[int(event.start):int(event.end)] = 1
+        event_or_not = recording.event_df[RESP_EVENT_TYPES].sum(axis=1)
 
-        return signals, event_or_not, torch.tensor(pleth)
+        return signals, event_or_not
 
 def process_higher_freqs(signal, freq):
     list_mean = []

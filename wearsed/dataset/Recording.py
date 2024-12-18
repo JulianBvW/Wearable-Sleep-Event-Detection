@@ -112,7 +112,7 @@ class Recording():
         edf_reader.close()
 
     def load_scorings(self, path_scoring, subject_id, events_as_list):
-        self.hypnogram = pd.read_csv(path_scoring + f'hypnogram/hypnogram-{subject_id:04}.csv')['0']
+        self.hypnogram = pd.read_csv(path_scoring + f'hypnogram/hypnogram-{subject_id:04}.csv', header=None)[0]
         self.event_df  = pd.read_csv(path_scoring + f'events/events-{subject_id:04}.csv')
 
         self.events = []

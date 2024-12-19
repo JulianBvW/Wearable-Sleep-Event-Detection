@@ -135,7 +135,7 @@ def read_events(events_root):
     events = []
     for ev in events_root:
         ev = ev.attrib
-        if ev['Family'] == 'Respiratory':  # TODO: Arousals
+        if ev['Family'] in ['Respiratory', 'Neuro']:
             event_type = ev['Type']
             if event_type in EVENT_TYPES_SOMNOLYZER:
                 event_start = int(float(ev['Start']))

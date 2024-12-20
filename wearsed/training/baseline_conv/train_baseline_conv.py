@@ -2,106 +2,96 @@
 Train code for training the Baseline model
 '''
 
-from wearsed.dataset.WearSEDDataset import WearSEDDataset, get_shakiness
+from wearsed.dataset.WearSEDDataset import WearSEDDataset
 from wearsed.models.baseline_conv.BaselineConv import BaselineConv
 
 from argparse import ArgumentParser
+from random import shuffle
 from tqdm import tqdm
 import pandas as pd
 import os
 
-from sklearn.metrics import confusion_matrix
 import torch.nn.functional as F
 import torch.nn as nn
 import torch
 
 parser = ArgumentParser(description='Train code for training the Baseline model')
 parser.add_argument('--epochs', help='number of epochs', default=50, type=int)
-parser.add_argument('--batch-size', help='batch size', default=64, type=int)
-parser.add_argument('--seq-length', help='length of the individual segments parsed to the model', default=10*60, type=int)
-parser.add_argument('--out-dir', help='name of the output directory', default='output', type=str)
+parser.add_argument('--batch-size', help='how many random sequences per recording', default=32, type=int)
+parser.add_argument('--multi-batch-size', help='how many different recordings per batch', default=4, type=int)
+parser.add_argument('--seq-length', help='length of the individual segments parsed to the model', default=30*60, type=int)
+parser.add_argument('--out-dir', help='name of the output directory', default=None, type=str, required=True)
 args = parser.parse_args()
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-def get_random_sequence(signals, labels, max_time, seq_length):
-    start = torch.randint(0, max_time, (1,))
+def get_random_start(labels, max_time, seq_length):
+    start = torch.randint(0, max_time, (1,)).item()
     end = start + seq_length
-    return signals[:, start:end], labels[start:end]
+    return start, labels[start:end].sum() > 0
 
 def get_batch(signals, labels, batch_size, seq_length):
-    max_time = signals.shape[1] - seq_length
+    (hypnogram, spo2, pleth) = signals
+    max_time = len(labels) - seq_length
 
     tries = 0
+    random_starts = []
+    while len(random_starts) < batch_size:
+        random_start, has_positive_class = get_random_start(labels, max_time, seq_length)
+        if has_positive_class or tries >= batch_size // 2:
+            random_starts.append(random_start)
+        tries += 1
+    shuffle(random_starts)
+
     batch_signals = []
     batch_labels = []
-    for i in range(batch_size):
-        signals_seq, labels_seq = get_random_sequence(signals, labels, max_time, seq_length)
-        if i < 0.8*batch_size or tries < 20:  # If there are not enough sequences with events and we haven't tried long enough
-            if labels_seq.sum() == 0:         # ..check if this is a sequence without events and if so, roll again
-                signals_seq, labels_seq = get_random_sequence(signals, labels, max_time, seq_length)  # TODO could still be negative sample
-                batch_signals.append(signals_seq)
-                batch_labels.append(labels_seq)
-                tries += 1
-                continue
-        batch_signals.append(signals_seq)
-        batch_labels.append(labels_seq)
+    for start in random_starts:
+        end = start + seq_length
+        seq_hypnogram = hypnogram[start:end].view((1, -1))
+        seq_spo2 = spo2[start:end].view((1, -1))
+        seq_pleth = pleth[start*256:end*256].view((256, -1))
+        combined_signal = torch.cat([seq_hypnogram, seq_spo2, seq_pleth], dim=0)
+        batch_signals.append(combined_signal)
+        batch_labels.append(labels[start:end])
+
     return torch.stack(batch_signals), torch.stack(batch_labels)
 
-def get_random_sequence_PLETH(signals, labels, pleth, max_time, seq_length):
-    start = torch.randint(0, max_time, (1,))
-    end = start + seq_length
-    return signals[:, start:end], labels[start:end], pleth[start*256:end*256]
-
-def get_batch_PLETH(signals, labels, pleth, batch_size, seq_length):
-    max_time = signals.shape[1] - seq_length
-
-    tries = 0
-    batch_signals = []
-    batch_labels = []
-    for i in range(batch_size):
-        signals_seq, labels_seq, pleth_seq = get_random_sequence_PLETH(signals, labels, pleth, max_time, seq_length)
-        if i < 0.8*batch_size or tries < 20:  # If there are not enough sequences with events and we haven't tried long enough
-            if labels_seq.sum() == 0:         # ..check if this is a sequence without events and if so, roll again
-                signals_seq, labels_seq, pleth_seq = get_random_sequence_PLETH(signals, labels, pleth, max_time, seq_length)  # TODO could still be negative sample
-                pleth_seq = get_shakiness(pleth_seq, 256)
-                batch_signals.append(torch.cat([signals_seq, pleth_seq.unsqueeze(0)]))
-                batch_labels.append(labels_seq)
-                tries += 1
-                continue
-        pleth_seq = get_shakiness(pleth_seq, 256)
-        batch_signals.append(torch.cat([signals_seq, pleth_seq.unsqueeze(0)]))
-        batch_labels.append(labels_seq)
-    return torch.stack(batch_signals), torch.stack(batch_labels)
+def get_multi_batch(dataset, i, multi_batch_size, batch_size, seq_length):
+    multi_batch_signals = []
+    multi_batch_labels  = []
+    for j in range(multi_batch_size):
+        (hypnogram, spo2, pleth), event_or_not = dataset[multi_batch_size*i+j]
+        batch_signal, batch_label = get_batch((hypnogram, spo2, pleth), event_or_not, batch_size, seq_length)
+        multi_batch_signals.append(batch_signal)
+        multi_batch_labels.append(batch_label)
+    return torch.cat(multi_batch_signals), torch.cat(multi_batch_labels)
 
 # Output folder
-OUTPUT_DIR = f'wearsed/training/baseline_conv/{args.out_dir}/'
+OUTPUT_DIR = f'wearsed/training/baseline_conv/output/{args.out_dir}/'
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Dataset
-full_dataset = WearSEDDataset(signals_to_read=['SpO2', 'Pleth'], preprocess=True)
+full_dataset = WearSEDDataset(signals_to_read=['SpO2', 'Pleth'])
 train_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [0.8, 0.2])
 
 # Model, Optimizer, Criterion
-model = BaselineConv(in_channels=7).to(device)
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-2)
-criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([2.0]).to(device))
+model = BaselineConv(in_channels=6).to(device)
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+criterion = nn.BCEWithLogitsLoss()
 
 # Training Loop
 train_losses = []
 test_losses = []
-#cm_tn, cm_fp, cm_fn, cm_tp = [], [], [], []
-#accuracies = []
 
 for epoch in range(args.epochs):
 
     # Taining
     model.train()
     train_loss = 0
-    for signals, labels, pleth in tqdm(train_dataset):
+    for i in tqdm(range(len(train_dataset) // args.multi_batch_size)):
         optimizer.zero_grad()
 
-        x, y = get_batch_PLETH(signals, labels, pleth, batch_size=args.batch_size, seq_length=args.seq_length)
+        x, y = get_multi_batch(train_dataset, i, multi_batch_size=args.multi_batch_size, batch_size=args.batch_size, seq_length=args.seq_length)
         x, y = x.to(device), y.to(device)
         
         # Forward pass
@@ -119,9 +109,9 @@ for epoch in range(args.epochs):
     predictions = []
     targets = []
     with torch.no_grad():
-        for signals, labels, pleth in tqdm(test_dataset):
+        for i in tqdm(range(len(test_dataset) // args.multi_batch_size)):
 
-            x, y = get_batch_PLETH(signals, labels, pleth, batch_size=args.batch_size, seq_length=args.seq_length)
+            x, y = get_multi_batch(test_dataset, i, multi_batch_size=args.multi_batch_size, batch_size=args.batch_size, seq_length=args.seq_length)
             x, y = x.to(device), y.to(device)
 
             # Forward pass
@@ -141,9 +131,11 @@ for epoch in range(args.epochs):
     #accuracy = (tn+tp)/(tn+fp+fn+tp)
     
     #print(f'Epoch {epoch + 1}, Train Loss: {train_loss / len(train_dataset):.4f}, Test Loss: {test_loss / len(test_dataset):.4f}, Test Accuracy: {accuracy*100:.3}% ({tn=}, {fp=}, {fn=}, {tp=})')
-    print(f'Epoch {epoch + 1}, Train Loss: {train_loss / len(train_dataset):.4f}, Test Loss: {test_loss / len(test_dataset):.4f}')
-    train_losses.append(train_loss / len(train_dataset))
-    test_losses.append(test_loss / len(test_dataset))
+    train_ds_len = len(train_dataset) - (len(train_dataset) % args.multi_batch_size)
+    test_ds_len  = len(test_dataset)  - (len(test_dataset) % args.multi_batch_size)
+    print(f'Epoch {epoch + 1}, Train Loss: {train_loss / train_ds_len:.4f}, Test Loss: {test_loss / test_ds_len:.4f}')
+    train_losses.append(train_loss / train_ds_len)
+    test_losses.append(test_loss / test_ds_len)
     # cm_tn.append(tn)
     # cm_fp.append(fp)
     # cm_fn.append(fn)

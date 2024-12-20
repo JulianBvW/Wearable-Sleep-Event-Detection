@@ -38,16 +38,14 @@ class WearSEDDataset(Dataset):
         # 1 output: Event vs No Event (1Hz)
 
         # Inputs
-        hypnogram = torch.Tensor(recording.hypnogram).unsqueeze(0)
-        spo2 = torch.Tensor(recording.psg['SpO2']).unsqueeze(0)
+        hypnogram = torch.Tensor(recording.hypnogram)
+        spo2 = torch.Tensor(recording.psg['SpO2'])
         pleth = torch.Tensor(recording.psg['Pleth'])
-        pleth = pleth.view((256, -1))
-        signals = torch.cat([hypnogram, spo2, pleth])
 
         # Output
-        event_or_not = recording.event_df[RESP_EVENT_TYPES].sum(axis=1)
+        event_or_not = torch.Tensor(recording.event_df[RESP_EVENT_TYPES].sum(axis=1))
 
-        return signals, event_or_not
+        return (hypnogram, spo2, pleth), event_or_not
 
 def process_higher_freqs(signal, freq):
     list_mean = []

@@ -43,7 +43,7 @@ class WearSEDDataset(Dataset):
         pleth = torch.Tensor(recording.psg['Pleth'])
 
         # Output
-        event_or_not = torch.Tensor(recording.event_df[RESP_EVENT_TYPES].sum(axis=1))
+        event_or_not = torch.Tensor(recording.event_df[RESP_EVENT_TYPES].any(axis=1).astype(int))
 
         return (hypnogram, spo2, pleth), event_or_not
 

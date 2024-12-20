@@ -39,11 +39,11 @@ class Recording():
 
     def get_ahi(self):  # Apnea Hypopnea Index
         assert len(self.events) > 0, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
-        return self.get_event_count(['Hypopnea', 'Obstructive apnea', 'Central apnea']) / (self.total_sleep_time_in_sec / 60 / 60)
+        return self.get_event_count(['HYP', 'OSA', 'CSA']) / (self.total_sleep_time_in_sec / 60 / 60)
 
     def get_ari(self):  # Arousal Index
         assert len(self.events) > 0, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
-        return self.get_event_count(['Arousal']) / (self.total_sleep_time_in_sec / 60 / 60)
+        return self.get_event_count(['ARO']) / (self.total_sleep_time_in_sec / 60 / 60)
 
     def look_at(self, time=None, window_size=None, events=EVENT_TYPES):
         assert len(self.events) > 0, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
@@ -148,6 +148,7 @@ class Recording():
 
         end_point = awake_phases.index[-1]+10
         self.hypnogram = self.hypnogram[0:end_point]
+        self.event_df = self.event_df[0:end_point]
         for signal in self.psg.keys():
             dyn_end_point = end_point * self.psg_freqs[signal]
             self.psg[signal] = self.psg[signal][0:dyn_end_point]

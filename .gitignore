@@ -3,6 +3,7 @@
 wearsed/training/*/*/*.csv
 wearsed/training/*/*/*/*.csv
 wearsed/training/*/*/*/*/*.csv
+wearsed/training/baseline_conv/output/new_baseline/test_preds_epoch_0.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

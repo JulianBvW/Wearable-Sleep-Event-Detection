@@ -3,7 +3,7 @@ Train code for training the Baseline model
 '''
 
 from wearsed.dataset.WearSEDDataset import WearSEDDataset
-from wearsed.models.baseline_conv.BaselineConv import BaselineConv
+from wearsed.models.baseline_conv.BaselineConv_BN import BaselineConv
 
 from argparse import ArgumentParser
 from random import shuffle

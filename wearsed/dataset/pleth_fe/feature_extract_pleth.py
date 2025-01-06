@@ -48,7 +48,8 @@ def get_features(signal, window_in_sec=5):
     return features
 
 dataset = WearSEDDataset(signals_to_read=['Pleth'], return_recording=True)
-for recording in tqdm(dataset):
+for r_id in tqdm(range(len(dataset))):
+    recording = dataset[r_id]
     mesa_id = recording.id
     features = get_features(recording.psg['Pleth'])
     features.to_csv(f'{OUT_DIR}/{mesa_id:04}.csv', index=False)

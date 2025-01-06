@@ -13,8 +13,8 @@ class BaselineConv(nn.Module):
 
         # PPG festure extraction
         self.fe_pool = nn.MaxPool1d(kernel_size=4, stride=4)
-        self.fe_conv_1 = double_conv_block(1, 4)
-        self.fe_conv_2 = double_conv_block(4, 8)
+        self.fe_conv_1 = double_conv_block(1, 4, kernel_size=5)
+        self.fe_conv_2 = double_conv_block(4, 8, kernel_size=5)
         self.fe_conv_3 = double_conv_block(8, 16)
         self.fe_conv_4 = double_conv_block(16, 8)
         self.fe_conv_5 = double_conv_block(8, 4)
@@ -79,11 +79,13 @@ class BaselineConv(nn.Module):
         return out
 
 
-def double_conv_block(in_channels, out_channels):
+def double_conv_block(in_channels, out_channels, kernel_size=3):
     block = nn.Sequential(
-        nn.Conv1d(in_channels, out_channels, kernel_size=3, padding=1),
+        nn.Conv1d(in_channels, out_channels, kernel_size=kernel_size, padding=kernel_size//2),
+        nn.BatchNorm1d(out_channels),
         nn.ReLU(inplace=True),
-        nn.Conv1d(out_channels, out_channels, kernel_size=3, padding=1),
+        nn.Conv1d(out_channels, out_channels, kernel_size=kernel_size, padding=kernel_size//2),
+        nn.BatchNorm1d(out_channels),
         nn.ReLU(inplace=True)
     )
     return block

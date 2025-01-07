@@ -71,7 +71,7 @@ class BaselineConv(nn.Module):
         x = self.dec_conv_2(x)                         # [bs, 16, 300]
 
         x = self.up_transpose_3(x)                     # [bs,  8, 600]
-        x = torch.cat([enc_1, x], 1)                   # [bs, 12, 600]
+        x = torch.cat([enc_1, x], 1)                   # [bs, 16, 600]
         x = self.dec_conv_3(x)                         # [bs,  8, 600]
 
         # Output

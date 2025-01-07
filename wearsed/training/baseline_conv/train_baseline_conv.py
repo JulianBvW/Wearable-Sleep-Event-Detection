@@ -23,6 +23,11 @@ parser.add_argument('--seq-length', help='length of the individual segments pars
 parser.add_argument('--out-dir', help='name of the output directory', default=None, type=str, required=True)
 args = parser.parse_args()
 
+print('--=={ Running script with arguments }==--')
+for k, v in vars(args).items():
+    print(f'    {k:17}: {v}')
+print('--=====================================--')
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def get_random_start(labels, max_time, seq_length):

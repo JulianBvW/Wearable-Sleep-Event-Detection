@@ -108,7 +108,7 @@ for epoch in range(args.epochs):
         try:
             x, y = get_multi_batch(train_dataset, i, multi_batch_size=args.multi_batch_size, batch_size=args.batch_size, seq_length=args.seq_length)
         except:
-            print('### Failed at TRAINING {i}')
+            print(f'### Failed at TRAINING {i}')
             train_fails += 1
             continue
         x, y = x.to(device), y.to(device)
@@ -133,7 +133,7 @@ for epoch in range(args.epochs):
             try:
                 x, y = get_multi_batch(train_dataset, i, multi_batch_size=args.multi_batch_size, batch_size=args.batch_size, seq_length=args.seq_length)
             except:
-                print('### Failed at TEST {i}')
+                print(f'### Failed at TEST {i}')
                 test_fails += 1
                 continue
             x, y = x.to(device), y.to(device)

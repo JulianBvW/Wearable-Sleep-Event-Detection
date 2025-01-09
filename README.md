@@ -32,9 +32,9 @@ pip install -e .
 
 - [X] Request data access for [MESA](https://sleepdata.org/datasets/mesa) and [CFS](https://sleepdata.org/datasets/cfs) dataset
 - [X] Create dataloader and do first tests with visuals
-- [ ] Read some literature [6/17]
-- [ ] Statistical analyses between events, arousals, demographic data, sleep stages, etc.
-- [ ] Create simple model and training code (for example CNN) to get first results on binary classification (Event vs. No Event) at 1 Hz with SpO2, PPG, and GT Hypnogram
+- [ ] Read some literature [15/20]
+- [X] Statistical analyses between events, arousals, demographic data, sleep stages, etc.
+- [X] Create simple model and training code (for example CNN) to get first results on binary classification (Event vs. No Event) at 1 Hz with SpO2, PPG, and GT Hypnogram
 - [ ] Increase complexity for the label by distinguishing between more labels like apnea vs. hypopnea and obstructive vs. central or arousals
 - [ ] Integrate new event scoring data to get central apnea labels (currently missing in the MESA scoring)
 - [ ] Increase model complexity by using different architectures, like Transformers

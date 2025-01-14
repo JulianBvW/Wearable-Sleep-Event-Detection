@@ -17,7 +17,6 @@ def to_event_list(event_or_not):
     events = []
     current_event = {}
     for i, current in enumerate(event_or_not):
-        current = current.item()
         if current == last:
             continue
 
@@ -52,7 +51,7 @@ def calc_metrics(y_pred_list, y_true_list):
     FNs = len(y_true_list)
     return TPs, FPs, FNs
 
-def metric(y_pred, y_true):
-    y_pred_list = to_event_list(correct(y_pred))
+def metric(y_pred, y_true, correctify=True):
+    y_pred_list = to_event_list(correct(y_pred)) if correctify else to_event_list(y_pred)
     y_true_list = to_event_list(y_true)
     return calc_metrics(y_pred_list, y_true_list)

@@ -2,7 +2,7 @@
 #SBATCH --partition=study
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=2
-#SBATCH --time=144:00:00
+#SBATCH --time=120:00:00
 #SBATCH --output=slurm/output/%j.out
 
 echo "no hypnogram with new baseline"

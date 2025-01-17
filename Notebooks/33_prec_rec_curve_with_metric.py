@@ -15,8 +15,8 @@ runs = [
 def get_precision_recall(y_true, y_pred, threshold, correctify):
     y_pred = (y_pred > threshold)*1
     TP, FP, FN = metric(y_pred, y_true, correctify=correctify)
-    precision = TP / (TP + FP)
-    recall = TP / (TP + FN)
+    precision = TP / (TP + FP) if TP > 0 else 0
+    recall = TP / (TP + FN) if TP > 0 else 0
     return precision, recall
 
 run_list = []

@@ -11,6 +11,12 @@ import os
 
 from wearsed.dataset.WearSEDDataset import WearSEDDataset
 
+from argparse import ArgumentParser
+parser = ArgumentParser(description='Preprocessing script')
+parser.add_argument('--start', help='start', default=0, type=int)
+parser.add_argument('--end', help='end', default=2000, type=int)
+args = parser.parse_args()
+
 FREQ = 256
 OUT_DIR = '/vol/sleepstudy/datasets/mesa/preprocessing/pleth'
 OUT_DIR_LOWPASS  = OUT_DIR + '/lowpass/'
@@ -46,6 +52,8 @@ def get_preprocessed_signal(signal):
 
 dataset = WearSEDDataset(signals_to_read=['Pleth'], return_recording=True)
 for r_id in tqdm(range(len(dataset))):
+    if r_id < args.start or r_id > args.end:
+        continue
     recording = dataset[r_id]
     mesa_id = recording.id
     preprocessed_signals = get_preprocessed_signal(recording.psg['Pleth'])

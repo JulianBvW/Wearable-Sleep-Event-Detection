@@ -4,7 +4,8 @@ from tqdm import tqdm
 import pandas as pd
 
 runs = [
-    ('no_hypnogram', 39)
+    ('no_hypnogram', 39),
+    ('sleep_wake', 38)
 ]
 
 def get_precision_recall(y_true, y_pred, threshold, correctify):
@@ -40,4 +41,4 @@ df = pd.DataFrame({
     'precision': prec_list,
     'recall': rec_list
 })
-df.to_csv('Notebooks/36_prec_rec_new_no_hypno.csv', index=False)
+df.to_csv('Notebooks/36_prec_rec_new_no_hypno2.csv', index=False)

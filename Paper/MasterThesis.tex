@@ -1,0 +1,92 @@
+\documentclass{report} %[twoside] ?
+\usepackage[utf8]{inputenc}
+\usepackage[german]{babel}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{amssymb, mathtools}
+\usepackage{setspace}
+\usepackage{multirow}
+\usepackage{subcaption}
+\usepackage{caption}
+\usepackage{changepage}
+\usepackage{xurl}
+\usepackage{titlesec}
+\captionsetup{font=footnotesize}
+\titleformat{\chapter}[display]
+    {\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{20pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{0pt}{40pt}
+
+\title{
+    Title
+}
+
+\author{Julian Hendrik Freiherr Bock von Wülfingen}
+\date{23.04.2025}
+
+\begin{document}
+
+\onehalfspacing
+
+\pagenumbering{gobble}
+
+\begin{titlepage}
+
+	\begin{center}
+
+        \vspace*{\baselineskip}
+
+        {\Large Bielefeld University}
+        
+        \vspace{1.75\baselineskip}
+
+        {\LARGE \scshape Title \\ 2 \\ 3\par} % Title
+
+        \vspace{5\baselineskip}
+        
+        {\Large Julian Hendrik Freiherr Bock von Wülfingen}
+        
+        \vspace{2\baselineskip}
+
+        {\Large Master Thesis\vspace{1em}}
+        
+        \textit{in Intelligent Systems \vspace{1em} \\ AG Machine Learning}
+	
+        \vfill
+
+        \vspace{0.3\baselineskip}
+        
+        Primary Supervisor:     Michiel Straat\\
+        Secondary Supervisor:   Pedro Fonseca\\
+        Date:		            23.04.2025
+
+    \end{center}
+
+\end{titlepage}
+
+\tableofcontents
+
+\cleardoublepage
+\pagenumbering{arabic}
+
+% \include{ch0-Abstract}
+
+\include{ch1-Introduction}
+
+% \include{ch2-Basics}
+
+% \include{ch3-LeakageDetection}
+
+% \include{ch4-Methods}
+
+% \include{ch5-Results}
+
+% \include{ch6-Conclusion}
+
+% \bibliographystyle{plain}
+% \bibliography{References.bib}
+
+% \appendix
+
+% \include{ch7-Appendix}
+
+\end{document}

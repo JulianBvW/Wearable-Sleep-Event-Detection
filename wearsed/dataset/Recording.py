@@ -29,21 +29,33 @@ class Recording():
         self.post_process()
 
     def get_event_count(self, event_type):
-        assert len(self.events) > 0, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
+        assert self.events is not None, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
         return len(self.get_events(event_type))
 
     def get_events(self, event_type):
-        assert len(self.events) > 0, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
+        assert self.events is not None, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
         event_types = event_type if type(event_type) is list else [event_type]
         return list(filter(lambda event: event.type in event_types, self.events))
 
     def get_ahi(self):  # Apnea Hypopnea Index
-        assert len(self.events) > 0, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
+        assert self.events is not None, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
         return self.get_event_count(['HYP', 'OSA', 'CSA']) / (self.total_sleep_time_in_sec / 60 / 60)
 
     def get_ari(self):  # Arousal Index
-        assert len(self.events) > 0, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
+        assert self.events is not None, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
         return self.get_event_count(['ARO']) / (self.total_sleep_time_in_sec / 60 / 60)
+
+    def get_ahi_severity_class(self):
+        assert self.events is not None, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
+        ahi = self.get_ahi()
+
+        if ahi < 5:   # Normal
+            return 0
+        if ahi < 15:  # Mild
+            return 1
+        if ahi < 30:  # Moderate
+            return 2
+        return 3      # Severe
 
     def look_at(self, time=None, window_size=None, events=EVENT_TYPES):
         assert len(self.events) > 0, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
@@ -115,8 +127,9 @@ class Recording():
         self.hypnogram = pd.read_csv(path_scoring + f'hypnogram/hypnogram-{subject_id:04}.csv', header=None)[0]
         self.event_df  = pd.read_csv(path_scoring + f'events/events-{subject_id:04}.csv')
 
-        self.events = []
+        self.events = None
         if events_as_list:
+            self.events = []
             event_list = pd.read_csv(path_scoring + f'event_list/event-list-{subject_id:04}.csv')
             for _, event in event_list.iterrows():
                 self.events.append(Event((event['Type'], event['Start'], event['End']), direct=True))

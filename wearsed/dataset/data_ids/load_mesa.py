@@ -3,6 +3,7 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 
+from wearsed.dataset.Recording import Recording
 from wearsed.dataset.data_ids.load_scorings import load_scorings_nsrr, load_scorings_somnolyzer
 
 if len(sys.argv) < 3:
@@ -28,7 +29,7 @@ label_file = mesa_root + 'datasets/mesa-sleep-harmonized-dataset-0.7.0.csv'
 ids = pd.read_csv(label_file)['mesaid']
 
 
-print('### (1/2) Testing IDs')
+print('### (1/3) Testing IDs')
 failed = 0
 failed_psg    = 0
 failed_annot  = 0
@@ -41,18 +42,33 @@ for id in tqdm(ids):
         failed += 1
         failed_psg    += int(not avail_psg)
         failed_annot  += int(not avail_annot)
-available_ids = pd.Series(available_ids)
 print(f'Failed: {failed}/{len(ids)}')
 print(f'  Missing PSG:    {failed_psg}')
 print(f'  Missing Annot:  {failed_annot}\n')
 
 
-print('### (2/2) Reading Scorings')
+print('### (2/3) Reading Scorings')
 load_scorings = load_scorings_nsrr if scoring_from == 'nsrr' else load_scorings_somnolyzer
-for id in tqdm(available_ids.values):
+for id in tqdm(available_ids):
     load_scorings(mesa_root, id)
+print()
 
-available_ids.to_csv(f'wearsed/dataset/data_ids/mesa_ids_{scoring_from}.csv', header=False, index=False)
+
+print('### (3/3) Getting AHI Severity Class')
+ahi_scs = []
+for id in tqdm(available_ids):
+    rec = Recording(id, signals_to_read=[], scoring_from=scoring_from, events_as_list=True)
+    ahi_scs.append(rec.get_ahi_severity_class())
+
+
+print('### Saving to disk... ', end='')
+available_ids_and_ahi_sc = pd.DataFrame({
+    'id': available_ids,
+    'ahi_severity_class': ahi_scs
+})
+
+available_ids_and_ahi_sc.to_csv(f'wearsed/dataset/data_ids/mesa_ids_{scoring_from}.csv', header=True, index=False)
 
 with open('wearsed/dataset/data_ids/mesa_root.txt', 'w') as f:
     f.write(mesa_root)
+print('Done!')

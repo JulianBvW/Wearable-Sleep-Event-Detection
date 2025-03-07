@@ -1,0 +1,39 @@
+\chapter{Methods \label{Chapter-Methods}}
+
+\section{Dataset}
+
+\begin{itemize}
+    \item Explain MESA (what Patients, how did they record the nights, ...)
+    \item Statistical analysis (Count, Age, ...)
+    \item Scorings from SOMNOLYZER (OSA, HYP, ...)
+    \item Kappa between NSRR and SOMNOLYZER
+    \item Use predicted Hypnogram (maybe?) and their Kappa
+\end{itemize}
+
+\section{Preprocessing}
+
+\begin{itemize}
+    \item PPG [256Hz], SpO2 [1Hz], Hypnogram [1Hz]
+    \item For PPG: Statistical Analysis, Denoising, VAE?, Conv-Block
+\end{itemize}
+
+\section{Model Architecture}
+
+\begin{itemize}
+    \item U-Net (with PPG Conv-Block), Batch-Norm, Attention, ...
+    \item Output: Detection at 1Hz - Event vs No Event
+    \item TODO Next model then classifies into SDB classes
+\end{itemize}
+
+\section{Training and Evaluation}
+
+\begin{itemize}
+    \item Training Parameters (Optimizer, LR, BS, ...) and Setup (Machines, ...)
+    \item Seed and Cross-Validation
+    \item Train on 30min (?) segments. For Testing: Concat 30min Windows with Overlap for full night result.
+    \item Correct results (like Olsen, 10sec minimum event and distance between events)
+    \item Event-based metrics (Se, Pr, F1) and when to count TP, TN, FP, FN
+    \item AHI-based metric (Linear Correlation, Severity Classes, Near-Boundary Double-Classification)
+\end{itemize}
+
+% \subsection*{Subsection}

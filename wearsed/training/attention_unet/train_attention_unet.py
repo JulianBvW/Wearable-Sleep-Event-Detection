@@ -7,9 +7,9 @@ from wearsed.dataset.WearSEDDataset import WearSEDDataset
 from wearsed.models.attention_unet.AttentionUNet import AttentionUNet
 
 from argparse import ArgumentParser
-from random import shuffle
 from tqdm import tqdm
 import pandas as pd
+import numpy as np
 import os
 
 import torch.nn.functional as F
@@ -45,7 +45,7 @@ def get_batch(signals, labels, batch_size, seq_length):
         if has_positive_class or tries >= batch_size // 2:
             random_starts.append(random_start)
         tries += 1
-    shuffle(random_starts)
+    np.random.shuffle(random_starts)
 
     batch_signals = []
     batch_labels = []

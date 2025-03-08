@@ -134,7 +134,7 @@ for epoch in range(args.epochs):
         optimizer.zero_grad()
 
         try:
-            x, y = get_test_batch(train_dataset[i], seq_length=args.seq_length)
+            x, y = get_multi_batch(train_dataset, i, multi_batch_size=args.multi_batch_size, batch_size=args.batch_size, seq_length=args.seq_length)
         except:
             print(f'### Failed at TRAINING {i}')
             train_fails += 1
@@ -159,7 +159,7 @@ for epoch in range(args.epochs):
         for i in tqdm(range(len(test_dataset))):
             
             try:
-                x, y = get_multi_batch(train_dataset, i, multi_batch_size=args.multi_batch_size, batch_size=args.batch_size, seq_length=args.seq_length)
+                x, y = get_test_batch(train_dataset[i], seq_length=args.seq_length)
             except:
                 print(f'### Failed at TEST {i}')
                 test_fails += 1

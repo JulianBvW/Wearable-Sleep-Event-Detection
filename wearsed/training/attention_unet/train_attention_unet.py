@@ -105,28 +105,20 @@ for epoch in range(args.epochs):
             # Loss computation
             loss = criterion(y_hat, y)
             test_loss += loss.item()
-            predictions.append(prediction.cpu().flatten()[OVERLAP_WINDOW:args.seq_length-OVERLAP_WINDOW])
+            predictions.append(prediction.cpu()[:, OVERLAP_WINDOW:args.seq_length-OVERLAP_WINDOW].flatten())
             predictions.append(torch.tensor([-499]))
-            targets.append(y.cpu().flatten()[OVERLAP_WINDOW:args.seq_length-OVERLAP_WINDOW])
+            targets.append(y.cpu()[:, OVERLAP_WINDOW:args.seq_length-OVERLAP_WINDOW].flatten())
             targets.append(torch.tensor([-999]))
     
     predictions = torch.cat(predictions)
     targets = torch.cat(targets)
     pd.DataFrame({'targets': targets, 'predictions': predictions}).to_csv(OUTPUT_DIR + f'/test_preds_epoch_{epoch}.csv', index=False)
-    #tn, fp, fn, tp = confusion_matrix(targets, predictions).ravel()
-    #accuracy = (tn+tp)/(tn+fp+fn+tp)
     
-    #print(f'Epoch {epoch + 1}, Train Loss: {train_loss / len(train_dataset):.4f}, Test Loss: {test_loss / len(test_dataset):.4f}, Test Accuracy: {accuracy*100:.3}% ({tn=}, {fp=}, {fn=}, {tp=})')
     train_ds_len = len(train_ids) - (len(train_ids) % args.multi_batch_size) - train_fails*args.multi_batch_size
     test_ds_len  = len(test_ids)  - (len(test_ids) % args.multi_batch_size) - test_fails*args.multi_batch_size
     print(f'Epoch {epoch + 1}, Train Loss: {train_loss / train_ds_len:.4f}, Test Loss: {test_loss / test_ds_len:.4f}')
     train_losses.append(train_loss / train_ds_len)
     test_losses.append(test_loss / test_ds_len)
-    # cm_tn.append(tn)
-    # cm_fp.append(fp)
-    # cm_fn.append(fn)
-    # cm_tp.append(tp)
-    # accuracies.append(accuracy)
 
     if epoch % 10 == 0:
         torch.save(model.state_dict(), OUTPUT_DIR + f'/model_epoch_{epoch}.pth')
@@ -135,12 +127,7 @@ for epoch in range(args.epochs):
 torch.save(model.state_dict(), OUTPUT_DIR + '/model_final.pth')
 results = pd.DataFrame({
     'train_losses': train_losses,
-    'test_losses': test_losses,
-    # 'cm_tn': cm_tn,
-    # 'cm_fp': cm_fp,
-    # 'cm_fn': cm_fn,
-    # 'cm_tp': cm_tp,
-    # 'accuracies': accuracies
+    'test_losses': test_losses
 })
 results.to_csv(OUTPUT_DIR + '/losses.csv', index=False)
 

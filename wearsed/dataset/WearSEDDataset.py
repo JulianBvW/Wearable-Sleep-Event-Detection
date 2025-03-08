@@ -14,7 +14,7 @@ class WearSEDDataset(Dataset):
         with open(mesaid_path + 'mesa_root.txt', 'r') as f:
             self.mesa_root = f.readline()
         
-        self.mesa_ids = pd.read_csv(mesaid_path + f'mesa_ids_{scoring_from}.csv', header=None)['id']
+        self.mesa_ids = pd.read_csv(mesaid_path + f'mesa_ids_{scoring_from}.csv')['id']
         self.subject_infos = pd.read_csv(self.mesa_root + 'datasets/mesa-sleep-harmonized-dataset-0.7.0.csv')
         self.subject_infos.set_index('mesaid', inplace=True)
 

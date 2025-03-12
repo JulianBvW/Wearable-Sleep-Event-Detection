@@ -7,6 +7,7 @@ from scipy.signal import butter, filtfilt
 from tqdm import tqdm
 import pandas as pd
 import numpy as np
+import h5py
 import os
 
 from wearsed.dataset.WearSEDDataset import WearSEDDataset
@@ -58,4 +59,5 @@ for r_id in tqdm(range(len(dataset))):
     mesa_id = recording.id
     preprocessed_signals = get_preprocessed_signal(recording.psg['Pleth'])
     for out_dir, prepocessed_signal in zip(OUT_DIRS, preprocessed_signals):
-        prepocessed_signal.to_csv(f'{out_dir}/{mesa_id:04}.csv', index=False)
+        with h5py.File(f'{out_dir}/{mesa_id:04}.hdf5', 'w') as f:
+            dset = f.create_dataset('signal', data=prepocessed_signal.values.astype(np.float32))

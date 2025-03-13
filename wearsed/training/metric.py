@@ -24,7 +24,7 @@ def to_event_list(event_or_not):
     starts = diff != 1
     ends = torch.concat([(diff != 1)[1:], torch.tensor([True])])
     
-    event_list = [{'start': int(start), 'end': int(end)} for start, end in zip(events[starts], events[ends])]
+    event_list = [{'start': int(start), 'end': int(end)} for start, end in zip(events[starts], events[ends])] if len(starts) > 0 else []
     return event_list
 
 def do_overlap(ev1, ev2):

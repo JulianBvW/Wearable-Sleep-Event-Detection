@@ -159,7 +159,7 @@ class Recording():
         awake_phases = self.hypnogram[self.hypnogram != 0]
         self.total_sleep_time_in_sec = len(awake_phases)
 
-        end_point = min(awake_phases.index[-1]+60, len(self.hypnogram))
+        end_point = min(awake_phases.index[-1]+10, len(self.hypnogram))
         self.hypnogram = self.hypnogram[0:end_point]
         self.event_df = self.event_df[0:end_point]
         for signal in self.psg.keys():

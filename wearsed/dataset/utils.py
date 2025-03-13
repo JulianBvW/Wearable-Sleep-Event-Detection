@@ -2,6 +2,8 @@
 Utility functions for the WearSED Dataset
 '''
 
+import pandas as pd
+
 def to_obj(event):
     obj = {}
     for child in event:
@@ -18,7 +20,11 @@ def from_clock(clock):
     h, m, s = map(int, clock.split(':'))
     return h*60*60 + m*60 + s
 
-
+def to_length(series, end_point):
+    if len(series) >= end_point:
+        return series[0:end_point]
+    missing = pd.Series([0] * (end_point-len(series)))
+    return pd.concat([series, missing], ignore_index=True)
 
 
 EVENT_TYPES = ['OSA', 'CSA', 'MSA', 'HYP', 'ARO']

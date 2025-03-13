@@ -11,7 +11,7 @@ import matplotlib.patches as mpatches
 from matplotlib.ticker import FuncFormatter
 
 from wearsed.dataset.Event import Event
-from wearsed.dataset.utils import from_clock, to_clock, EVENT_COLORS, EVENT_TYPES
+from wearsed.dataset.utils import from_clock, to_clock, to_length, EVENT_COLORS, EVENT_TYPES
 
 class Recording():
     def __init__(self, subject_id, subject_info=None, signals_to_read=['HR', 'SpO2', 'Flow', 'Pleth'], scoring_from='somnolyzer', events_as_list=False):
@@ -159,9 +159,9 @@ class Recording():
         awake_phases = self.hypnogram[self.hypnogram != 0]
         self.total_sleep_time_in_sec = len(awake_phases)
 
-        end_point = awake_phases.index[-1]+10
+        end_point = min(awake_phases.index[-1]+60, len(self.hypnogram))
         self.hypnogram = self.hypnogram[0:end_point]
         self.event_df = self.event_df[0:end_point]
         for signal in self.psg.keys():
             dyn_end_point = end_point * self.psg_freqs[signal]
-            self.psg[signal] = self.psg[signal][0:dyn_end_point]
+            self.psg[signal] = to_length(self.psg[signal], dyn_end_point)

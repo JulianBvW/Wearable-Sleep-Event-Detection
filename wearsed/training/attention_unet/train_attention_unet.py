@@ -19,7 +19,7 @@ import torch.nn as nn
 import torch
 
 parser = ArgumentParser(description='Train code for training the Attention U-Net model')
-parser.add_argument('--epochs', help='number of epochs', default=50, type=int)
+parser.add_argument('--epochs', help='number of epochs', default=30, type=int)
 parser.add_argument('--fold-nr', help='which fold to use with k-fold', default=0, type=int, required=True)
 parser.add_argument('--batch-size', help='how many random sequences per recording', default=32, type=int)
 parser.add_argument('--out-dir', help='name of the output directory', default=None, type=str, required=True)

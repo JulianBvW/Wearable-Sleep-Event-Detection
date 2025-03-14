@@ -31,11 +31,7 @@ def get_batch(signals, labels, batch_size, seq_length):
         seq_hypnogram = hypnogram[start:end].view((1, -1))
         seq_spo2 = spo2[start:end].view((1, -1))
         seq_pleth = pleth[start*256:end*256].view((256, -1))
-        try:
-            combined_signal = torch.cat([seq_hypnogram, seq_spo2, seq_pleth], dim=0)
-        except:
-            print(f'### FAIL at {start}')
-            raise Exception(f'### FAIL at {start}')
+        combined_signal = torch.cat([seq_hypnogram, seq_spo2, seq_pleth], dim=0)
         batch_signals.append(combined_signal)
         batch_labels.append(labels[start:end])
 
@@ -47,11 +43,7 @@ def get_multi_batch(dataset, datapoint_ids, i, multi_batch_size, batch_size, seq
     for j in range(multi_batch_size):
         datapoint_id = datapoint_ids[multi_batch_size*i+j]
         (hypnogram, spo2, pleth), event_or_not = dataset.from_id(datapoint_id)
-        try:
-            batch_signal, batch_label = get_batch((hypnogram, spo2, pleth), event_or_not, batch_size, seq_length)
-        except:
-            print(f'### get_multi_batch at {i=}, {j=}, {datapoint_id=}')
-            raise Exception(f'### get_multi_batch at {i=}, {j=}, {datapoint_id=}')
+        batch_signal, batch_label = get_batch((hypnogram, spo2, pleth), event_or_not, batch_size, seq_length)
         multi_batch_signals.append(batch_signal)
         multi_batch_labels.append(batch_label)
     return torch.cat(multi_batch_signals), torch.cat(multi_batch_labels)
@@ -63,17 +55,13 @@ def get_test_batch(datapoint, seq_length, overlap_window):
     batch_labels  = []
     for start in range(0, len(event_or_not), step):
         end = start + seq_length
+        if len(event_or_not[start:end]) < seq_length:
+            break
         seq_hypnogram = hypnogram[start:end].view((1, -1))
-        seq_spo2 = spo2[start:end].view((1, -1))
-        seq_pleth = pleth[start*256:end*256].view((256, -1))
-        try:
-            combined_signal = torch.cat([seq_hypnogram, seq_spo2, seq_pleth], dim=0)
-        except:
-            print(f'### FAIL (test) at {start}')
-            raise Exception(f'### FAIL (test) at {start}')
+        seq_spo2      = spo2[start:end].view((1, -1))
+        seq_pleth     = pleth[start*256:end*256].view((256, -1))
+        combined_signal = torch.cat([seq_hypnogram, seq_spo2, seq_pleth], dim=0)
         batch_signals.append(combined_signal)
         batch_labels.append(event_or_not[start:end])
-    del batch_signals[-1]
-    del batch_labels[-1]
     return torch.stack(batch_signals), torch.stack(batch_labels)
 

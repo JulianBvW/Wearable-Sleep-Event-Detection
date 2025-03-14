@@ -4,6 +4,7 @@ Train code for training the Baseline model
 
 from wearsed.dataset.WearSEDDataset import WearSEDDataset
 from wearsed.models.baseline_conv.BaselineConv import BaselineConv
+from wearsed.training.metric import get_best_f1_score
 
 from argparse import ArgumentParser
 from random import shuffle
@@ -55,11 +56,7 @@ def get_batch(signals, labels, batch_size, seq_length):
         seq_hypnogram = hypnogram[start:end].view((1, -1))
         seq_spo2 = spo2[start:end].view((1, -1))
         seq_pleth = pleth[start*256:end*256].view((256, -1))
-        try:
-            combined_signal = torch.cat([seq_hypnogram, seq_spo2, seq_pleth], dim=0)
-        except:
-            print(f'### FAIL at {start}')
-            raise Exception(f'### FAIL at {start}')
+        combined_signal = torch.cat([seq_hypnogram, seq_spo2, seq_pleth], dim=0)
         batch_signals.append(combined_signal)
         batch_labels.append(labels[start:end])
 
@@ -70,11 +67,7 @@ def get_multi_batch(dataset, i, multi_batch_size, batch_size, seq_length):
     multi_batch_labels  = []
     for j in range(multi_batch_size):
         (hypnogram, spo2, pleth), event_or_not = dataset[multi_batch_size*i+j]
-        try:
-            batch_signal, batch_label = get_batch((hypnogram, spo2, pleth), event_or_not, batch_size, seq_length)
-        except:
-            print(f'### get_multi_batch at {i=}, {j=}')
-            raise Exception(f'### get_multi_batch at {i=}, {j=}')
+        batch_signal, batch_label = get_batch((hypnogram, spo2, pleth), event_or_not, batch_size, seq_length)
         multi_batch_signals.append(batch_signal)
         multi_batch_labels.append(batch_label)
     return torch.cat(multi_batch_signals), torch.cat(multi_batch_labels)
@@ -110,12 +103,7 @@ for epoch in range(args.epochs):
     for i in tqdm(range(len(train_dataset) // args.multi_batch_size)):
         optimizer.zero_grad()
 
-        try:
-            x, y = get_multi_batch(train_dataset, i, multi_batch_size=args.multi_batch_size, batch_size=args.batch_size, seq_length=args.seq_length)
-        except:
-            print(f'### Failed at TRAINING {i}')
-            train_fails += 1
-            continue
+        x, y = get_multi_batch(train_dataset, i, multi_batch_size=args.multi_batch_size, batch_size=args.batch_size, seq_length=args.seq_length)
         x, y = x.to(device), y.to(device)
         
         # Forward pass
@@ -135,12 +123,7 @@ for epoch in range(args.epochs):
     with torch.no_grad():
         for i in tqdm(range(len(test_dataset) // args.multi_batch_size)):
             
-            try:
-                x, y = get_multi_batch(train_dataset, i, multi_batch_size=args.multi_batch_size, batch_size=args.batch_size, seq_length=args.seq_length)
-            except:
-                print(f'### Failed at TEST {i}')
-                test_fails += 1
-                continue
+            x, y = get_multi_batch(train_dataset, i, multi_batch_size=args.multi_batch_size, batch_size=args.batch_size, seq_length=args.seq_length)
             x, y = x.to(device), y.to(device)
 
             # Forward pass
@@ -156,13 +139,15 @@ for epoch in range(args.epochs):
     predictions = torch.cat(predictions)
     targets = torch.cat(targets)
     pd.DataFrame({'targets': targets, 'predictions': predictions}).to_csv(OUTPUT_DIR + f'/test_preds_epoch_{epoch}.csv', index=False)
+    best_f1, best_f1_thr, best_f1_correctify = get_best_f1_score(predictions, targets)
     #tn, fp, fn, tp = confusion_matrix(targets, predictions).ravel()
     #accuracy = (tn+tp)/(tn+fp+fn+tp)
     
     #print(f'Epoch {epoch + 1}, Train Loss: {train_loss / len(train_dataset):.4f}, Test Loss: {test_loss / len(test_dataset):.4f}, Test Accuracy: {accuracy*100:.3}% ({tn=}, {fp=}, {fn=}, {tp=})')
     train_ds_len = len(train_dataset) - (len(train_dataset) % args.multi_batch_size) - train_fails*args.multi_batch_size
     test_ds_len  = len(test_dataset)  - (len(test_dataset) % args.multi_batch_size) - test_fails*args.multi_batch_size
-    print(f'Epoch {epoch + 1}, Train Loss: {train_loss / train_ds_len:.4f}, Test Loss: {test_loss / test_ds_len:.4f}')
+    print(f'-> Epoch {epoch + 1}, Train Loss: {train_loss / train_ds_len:.4f}, Test Loss: {test_loss / test_ds_len:.4f}')
+    print(f'->   Best F1: {best_f1}, ({best_f1_thr}{', correctified' if best_f1_correctify else ''})\n\n')
     train_losses.append(train_loss / train_ds_len)
     test_losses.append(test_loss / test_ds_len)
     # cm_tn.append(tn)

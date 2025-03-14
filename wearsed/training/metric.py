@@ -62,3 +62,29 @@ def metric(y_pred, y_true, correctify=True):
     y_true_list = to_event_list(y_true)  # [0,0,0,1,1,1,1,1,0,0,0,1,1,1,0] -> [{start: 10, end: 29}, {start: 100, ..}]
     metrics = calc_metrics(y_pred_list, y_true_list)
     return metrics
+
+def get_precision_recall(y_pred, y_true, threshold, correctify):
+    y_pred = (y_pred > threshold)*1
+    TP, FP, FN = metric(y_pred, y_true, correctify=correctify)
+    precision = TP / (TP + FP) if TP > 0 else 0
+    recall = TP / (TP + FN) if TP > 0 else 0
+    return precision, recall
+
+def calc_f1_score(precision, recall):
+    if precision + recall == 0:
+        return 0
+    return (2 * precision * recall) / (precision + recall)
+
+def get_best_f1_score(y_pred, y_true):  # TODO Remove -999 values for the advanced training loop
+    best_f1 = 0
+    best_f1_thr = 0
+    best_f1_correctify = True
+    for correctify in [True, False]:
+        for thr in [i / 20 for i in range(1, 20)]:
+            precision, recall = get_precision_recall(y_pred, y_true, thr, correctify)
+            f1_score = calc_f1_score(precision, recall)
+            if f1_score > best_f1:
+                best_f1 = f1_score
+                best_f1_thr = thr
+                best_f1_correctify = correctify
+    return best_f1, best_f1_thr, best_f1_correctify

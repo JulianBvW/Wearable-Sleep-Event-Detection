@@ -3,6 +3,7 @@ Train code for training the Attention U-Net model
 '''
 
 from wearsed.training.utils import show_script_info
+from wearsed.training.metric import get_best_f1_score
 from wearsed.training.kfold.load_kfold import get_fold
 from wearsed.dataset.WearSEDDataset import WearSEDDataset
 from wearsed.training.batching import get_multi_batch, get_test_batch
@@ -11,6 +12,7 @@ from wearsed.models.attention_unet.AttentionUNet import AttentionUNet
 from argparse import ArgumentParser
 from tqdm import tqdm
 import pandas as pd
+import numpy as np
 import os
 
 import torch.nn as nn
@@ -27,13 +29,15 @@ parser.add_argument('--use-attention', help='what attention parts should be used
 args = parser.parse_args()
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+torch.manual_seed(42)
+np.random.seed(42)
 
 OVERLAP_WINDOW = 60  # 1 minute
 FOLD_NAME = 'fold-4-somnolyzer'
 SEED = 42
 
 # Output folder
-OUTPUT_DIR = f'wearsed/training/attention_unet/output/{args.out_dir}/'
+OUTPUT_DIR = f'wearsed/training/attention_unet/output/{args.out_dir}/f-{args.fold_nr}/'
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Dataset
@@ -50,27 +54,20 @@ show_script_info(args, model, 2+256)
 # Training Loop
 train_losses = []
 test_losses = []
+best_f1s = []
 
 train_fails = 0
 test_fails = 0
 
 for epoch in range(args.epochs):
 
-    train_fails = 0
-    test_fails = 0
-
     # Taining
     model.train()
-    train_loss = 0
+    train_loss, train_batches = 0, 0
     for i in tqdm(range(len(train_ids) // args.multi_batch_size)):
         optimizer.zero_grad()
 
-        try:
-            x, y = get_multi_batch(full_dataset, train_ids, i, multi_batch_size=args.multi_batch_size, batch_size=args.batch_size, seq_length=args.seq_length)
-        except:
-            print(f'### Failed at TRAINING {i}')
-            train_fails += 1
-            continue
+        x, y = get_multi_batch(full_dataset, train_ids, i, multi_batch_size=args.multi_batch_size, batch_size=args.batch_size, seq_length=args.seq_length)
         x, y = x.to(device), y.to(device)
         
         # Forward pass
@@ -79,23 +76,18 @@ for epoch in range(args.epochs):
         # Loss computation
         loss = criterion(y_hat, y)
         loss.backward()
-        train_loss += loss.item()
+        train_loss += loss.item() * y.shape[0]
+        train_batches += y.shape[0]
         optimizer.step()
     
     # Testing
     model.eval()
-    test_loss = 0
-    predictions = []
-    targets = []
+    test_loss, test_batches = 0, 0
+    predictions, targets = [], []
     with torch.no_grad():
         for i in tqdm(range(len(test_ids))):
             
-            try:
-                x, y = get_test_batch(full_dataset.from_id(test_ids[i]), seq_length=args.seq_length)
-            except:
-                print(f'### Failed at TESTING {i}')
-                test_fails += 1
-                continue
+            x, y = get_test_batch(full_dataset.from_id(test_ids[i]), seq_length=args.seq_length, overlap_window=OVERLAP_WINDOW)
             x, y = x.to(device), y.to(device)
 
             # Forward pass
@@ -104,21 +96,21 @@ for epoch in range(args.epochs):
             
             # Loss computation
             loss = criterion(y_hat, y)
-            test_loss += loss.item()
+            test_loss += loss.item() * y.shape[0]
+            test_batches += y.shape[0]
             predictions.append(prediction.cpu()[:, OVERLAP_WINDOW:args.seq_length-OVERLAP_WINDOW].flatten())
             predictions.append(torch.tensor([-499]))
             targets.append(y.cpu()[:, OVERLAP_WINDOW:args.seq_length-OVERLAP_WINDOW].flatten())
             targets.append(torch.tensor([-999]))
     
-    predictions = torch.cat(predictions)
-    targets = torch.cat(targets)
+    predictions, targets = torch.cat(predictions), torch.cat(targets)
     pd.DataFrame({'targets': targets, 'predictions': predictions}).to_csv(OUTPUT_DIR + f'/test_preds_epoch_{epoch}.csv', index=False)
+    best_f1, _, _ = get_best_f1_score(predictions, targets)
     
-    train_ds_len = len(train_ids) - (len(train_ids) % args.multi_batch_size) - train_fails*args.multi_batch_size
-    test_ds_len  = len(test_ids)  - (len(test_ids) % args.multi_batch_size) - test_fails*args.multi_batch_size
-    print(f'Epoch {epoch + 1}, Train Loss: {train_loss / train_ds_len:.4f}, Test Loss: {test_loss / test_ds_len:.4f}')
-    train_losses.append(train_loss / train_ds_len)
-    test_losses.append(test_loss / test_ds_len)
+    print(f'Epoch {epoch + 1}, Train Loss: {train_loss / train_batches:.4f}, Test Loss: {test_loss / test_batches:.4f}')
+    train_losses.append(train_loss / train_batches)
+    test_losses.append(test_loss / test_batches)
+    best_f1s.append(best_f1)
 
     if epoch % 10 == 0:
         torch.save(model.state_dict(), OUTPUT_DIR + f'/model_epoch_{epoch}.pth')
@@ -127,7 +119,8 @@ for epoch in range(args.epochs):
 torch.save(model.state_dict(), OUTPUT_DIR + '/model_final.pth')
 results = pd.DataFrame({
     'train_losses': train_losses,
-    'test_losses': test_losses
+    'test_losses': test_losses,
+    'best_f1': best_f1s
 })
 results.to_csv(OUTPUT_DIR + '/losses.csv', index=False)
 

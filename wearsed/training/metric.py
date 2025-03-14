@@ -75,7 +75,10 @@ def calc_f1_score(precision, recall):
         return 0
     return (2 * precision * recall) / (precision + recall)
 
-def get_best_f1_score(y_pred, y_true):  # TODO Remove -999 values for the advanced training loop
+def get_best_f1_score(y_pred, y_true):
+    y_pred = y_pred[y_pred != -499]
+    y_true = y_true[y_true != -999]
+
     best_f1 = 0
     best_f1_thr = 0
     best_f1_correctify = True

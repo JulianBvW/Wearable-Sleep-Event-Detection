@@ -1,21 +1,14 @@
-from wearsed.training.metric import metric, correct
+from wearsed.training.metric import get_precision_recall
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import pandas as pd
 
 runs = [
-    ('attention_none', 22, [0, 1, 2, 3]),
-    ('attention_gates', 22, [0, 1, 2, 3]),
-    ('attention_bottleneck', 22, [0, 1]),
-    # ('attention_gates_bottleneck', 25)
+    ('attention_none', 28, [0, 1, 2, 3]),
+    ('attention_gates', 28, [0, 1, 2, 3]),
+    ('attention_bottleneck', 28, [0, 1, 2, 3]),
+    ('attention_gates_bottleneck', 28, [0, 1, 2, 3])
 ]
-
-def get_precision_recall(y_true, y_pred, threshold, correctify):
-    y_pred = (y_pred > threshold)*1
-    TP, FP, FN = metric(y_pred, y_true, correctify=correctify)
-    precision = TP / (TP + FP) if TP > 0 else 0
-    recall = TP / (TP + FN) if TP > 0 else 0
-    return precision, recall
 
 run_list = []
 correctify_list = []
@@ -35,7 +28,7 @@ for run, epoch, folds in runs:
     for correctify in [True, False]:
         print(f'### Run {run} {'with' if correctify else 'without'} correction...')
         for thr in tqdm([i / 20 for i in range(1, 20)]):
-            precision, recall = get_precision_recall(y_true, y_pred, thr, correctify)
+            precision, recall = get_precision_recall(y_pred, y_true, thr, correctify)
             run_list.append(run)
             correctify_list.append(correctify)
             thr_list.append(thr)
@@ -49,4 +42,5 @@ df = pd.DataFrame({
     'precision': prec_list,
     'recall': rec_list
 })
-df.to_csv('Notebooks/45_results_with_folds1.csv', index=False)
+df['f1'] = (2 * df['precision'] * df['recall']) / (df['precision'] + df['recall'])
+df.to_csv('Notebooks/45_results_with_folds.csv', index=False)

@@ -26,6 +26,7 @@ parser.add_argument('--out-dir', help='name of the output directory', default=No
 parser.add_argument('--multi-batch-size', help='how many different recordings per batch', default=4, type=int)
 parser.add_argument('--seq-length', help='length of the individual segments parsed to the model', default=30*60, type=int)
 parser.add_argument('--use-attention', help='what attention parts should be used [gates,bottleneck]', default='', type=str, required=False)
+parser.add_argument('--use-predicted-hypnogram', help='use the predicted hypnogram instead of ground truth', action='store_true')
 args = parser.parse_args()
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -41,7 +42,7 @@ OUTPUT_DIR = f'wearsed/training/attention_unet/output/{args.out_dir}/f-{args.fol
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Dataset
-full_dataset = WearSEDDataset(signals_to_read=['SpO2', 'Pleth'])
+full_dataset = WearSEDDataset(signals_to_read=['SpO2', 'Pleth'], use_predicted_hypnogram=args.use_predicted_hypnogram)
 train_ids, test_ids = get_fold(FOLD_NAME, args.fold_nr, seed=SEED)
 
 # Model, Optimizer, Criterion

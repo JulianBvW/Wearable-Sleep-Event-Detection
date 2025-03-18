@@ -43,7 +43,7 @@ OUTPUT_DIR = f'wearsed/training/attention_unet/output/{args.out_dir}/f-{args.fol
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Dataset
-full_dataset = WearSEDDataset(signals_to_read=['SpO2', 'Pleth'], use_predicted_hypnogram=args.use_predicted_hypnogram)
+full_dataset = WearSEDDataset(signals_to_read=['SpO2', 'Pleth'], use_predicted_hypnogram=args.use_predicted_hypnogram, denoised_ppg=args.denoised_ppg)
 train_ids, test_ids = get_fold(FOLD_NAME, args.fold_nr, seed=SEED)
 
 # Model, Optimizer, Criterion

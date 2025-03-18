@@ -7,7 +7,7 @@ from wearsed.dataset.Recording import Recording
 from wearsed.dataset.utils import RESP_EVENT_TYPES
 
 class WearSEDDataset(Dataset):
-    def __init__(self, mesaid_path='wearsed/dataset/data_ids/', scoring_from='somnolyzer', signals_to_read=['HR', 'SpO2', 'Flow', 'Pleth'], return_recording=False):
+    def __init__(self, mesaid_path='wearsed/dataset/data_ids/', scoring_from='somnolyzer', signals_to_read=['HR', 'SpO2', 'Flow', 'Pleth'], return_recording=False, use_predicted_hypnogram=False):
         if not os.path.isfile(mesaid_path + 'mesa_root.txt') or not os.path.isfile(mesaid_path + f'mesa_ids_{scoring_from}.csv'):
             raise Exception(f'MESA IDs from {scoring_from} not loaded. Run `wearsed/dataset/data_ids/load_mesa.py <MESA ROOT PATH> {scoring_from}`.')
     
@@ -18,9 +18,10 @@ class WearSEDDataset(Dataset):
         self.subject_infos = pd.read_csv(self.mesa_root + 'datasets/mesa-sleep-harmonized-dataset-0.7.0.csv')
         self.subject_infos.set_index('mesaid', inplace=True)
 
-        self.scoring_from     = scoring_from
-        self.signals_to_read  = signals_to_read
-        self.return_recording = return_recording
+        self.scoring_from            = scoring_from
+        self.signals_to_read         = signals_to_read
+        self.return_recording        = return_recording
+        self.use_predicted_hypnogram = use_predicted_hypnogram
 
     def __len__(self):
         return len(self.mesa_ids)
@@ -31,7 +32,7 @@ class WearSEDDataset(Dataset):
     
     def from_id(self, mesa_id):
         subject_info = self.subject_infos.loc[mesa_id]
-        recording = Recording(mesa_id, subject_info, signals_to_read=self.signals_to_read, scoring_from=self.scoring_from, events_as_list=self.return_recording)
+        recording = Recording(mesa_id, subject_info, signals_to_read=self.signals_to_read, scoring_from=self.scoring_from, events_as_list=self.return_recording, use_predicted_hypnogram=self.use_predicted_hypnogram)
 
         if self.return_recording:
             return recording

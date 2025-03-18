@@ -14,7 +14,7 @@ from wearsed.dataset.Event import Event
 from wearsed.dataset.utils import from_clock, to_clock, to_length, EVENT_COLORS, EVENT_TYPES
 
 class Recording():
-    def __init__(self, subject_id, subject_info=None, signals_to_read=['HR', 'SpO2', 'Flow', 'Pleth'], scoring_from='somnolyzer', events_as_list=False):
+    def __init__(self, subject_id, subject_info=None, signals_to_read=['HR', 'SpO2', 'Flow', 'Pleth'], scoring_from='somnolyzer', events_as_list=False, use_predicted_hypnogram=False):
         self.id = subject_id
 
         path_dataset = '/vol/sleepstudy/datasets/mesa/'  # TODO make modular as argument
@@ -26,7 +26,7 @@ class Recording():
         self.load_scorings(path_scoring, subject_id, events_as_list)
         self.load_subject_data(path_subject, subject_id, subject_info)
 
-        self.post_process()
+        self.post_process(use_predicted_hypnogram, path_dataset)
 
     def get_event_count(self, event_type):
         assert self.events is not None, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
@@ -149,11 +149,11 @@ class Recording():
             'ever_smoked': subject_info.loc['nsrr_ever_smoker']
         }
     
-    def post_process(self):
+    def post_process(self, use_predicted_hypnogram=False, path_dataset=None):
         ''' Do postprocessing after loading
         - Calculate total sleep time (TST)
         - Cut off the awake phase at the end
-        - (TODO) Downsample ">1Hz" signals
+        - (Optional) Switch to predicted hypnogram
         '''
 
         awake_phases = self.hypnogram[self.hypnogram != 0]
@@ -165,3 +165,11 @@ class Recording():
         for signal in self.psg.keys():
             dyn_end_point = end_point * self.psg_freqs[signal]
             self.psg[signal] = to_length(self.psg[signal], dyn_end_point)
+        
+        if use_predicted_hypnogram:
+            predicted_hypnogram = pd.read_csv(f'{path_dataset}/predicted_hypnogram/mesa-{self.id:04}-1.csv', index_col='ts')['PPG_4cl']
+            predicted_hypnogram[predicted_hypnogram == 'W'] = 0
+            predicted_hypnogram[predicted_hypnogram == 'N1/N2'] = 1
+            predicted_hypnogram[predicted_hypnogram == 'N3'] = 3
+            predicted_hypnogram[predicted_hypnogram == 'R'] = 5
+            self.hypnogram = to_length(pd.Series(np.repeat(predicted_hypnogram.values, 30)), end_point)

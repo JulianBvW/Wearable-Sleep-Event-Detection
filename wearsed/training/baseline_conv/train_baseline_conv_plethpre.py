@@ -136,7 +136,8 @@ for epoch in range(args.epochs):
     
     predictions = torch.cat(predictions)
     targets = torch.cat(targets)
-    pd.DataFrame({'targets': targets, 'predictions': predictions}).to_csv(OUTPUT_DIR + f'/test_preds_epoch_{epoch}.csv', index=False)
+    if epoch % 4 == 0:
+        pd.DataFrame({'targets': targets, 'predictions': predictions}).to_csv(OUTPUT_DIR + f'/test_preds_epoch_{epoch}.csv', index=False)
     best_f1, best_f1_thr, best_f1_correctify = get_best_f1_score(predictions, targets)
     #tn, fp, fn, tp = confusion_matrix(targets, predictions).ravel()
     #accuracy = (tn+tp)/(tn+fp+fn+tp)

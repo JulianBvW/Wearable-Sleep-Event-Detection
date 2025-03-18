@@ -2,6 +2,7 @@
 Class to capture all relevant recordings, annotations, and subject info from the PSG
 '''
 
+import h5py
 import pyedflib
 import numpy as np
 import pandas as pd
@@ -14,7 +15,7 @@ from wearsed.dataset.Event import Event
 from wearsed.dataset.utils import from_clock, to_clock, to_length, EVENT_COLORS, EVENT_TYPES
 
 class Recording():
-    def __init__(self, subject_id, subject_info=None, signals_to_read=['HR', 'SpO2', 'Flow', 'Pleth'], scoring_from='somnolyzer', events_as_list=False, use_predicted_hypnogram=False):
+    def __init__(self, subject_id, subject_info=None, signals_to_read=['HR', 'SpO2', 'Flow', 'Pleth'], scoring_from='somnolyzer', events_as_list=False, use_predicted_hypnogram=False, denoised_ppg='none'):
         self.id = subject_id
 
         path_dataset = '/vol/sleepstudy/datasets/mesa/'  # TODO make modular as argument
@@ -22,7 +23,7 @@ class Recording():
         path_scoring = path_dataset + f'scorings/{scoring_from}/'
         path_subject = path_dataset + 'datasets/mesa-sleep-harmonized-dataset-0.7.0.csv'
 
-        self.load_psg(path_psg, signals_to_read=signals_to_read)
+        self.load_psg(path_psg, signals_to_read=signals_to_read, denoised_ppg=denoised_ppg, path_dataset=path_dataset)
         self.load_scorings(path_scoring, subject_id, events_as_list)
         self.load_subject_data(path_subject, subject_id, subject_info)
 
@@ -109,7 +110,7 @@ class Recording():
         plt.tight_layout()
         plt.show()
 
-    def load_psg(self, path_psg, signals_to_read):
+    def load_psg(self, path_psg, signals_to_read, denoised_ppg='none', path_dataset=''):
         edf_reader = pyedflib.EdfReader(path_psg)
 
         signal_labels = edf_reader.getSignalLabels()
@@ -120,8 +121,12 @@ class Recording():
             if signal_labels[i] in signals_to_read:
                 self.psg[signal_labels[i]] = pd.Series(edf_reader.readSignal(i))
                 self.psg_freqs[signal_labels[i]] = int(edf_reader.getSampleFrequency(i))
-        
+
         edf_reader.close()
+        
+        if denoised_ppg != 'none':
+            with h5py.File(f'{path_dataset}/preprocessing/pleth/{denoised_ppg}/{self.id:04}.hdf5', 'r') as f:
+                self.psg['Pleth'] = pd.Series(np.array(f['signal']), dtype=float)
 
     def load_scorings(self, path_scoring, subject_id, events_as_list):
         self.hypnogram = pd.read_csv(path_scoring + f'hypnogram/hypnogram-{subject_id:04}.csv', header=None)[0]

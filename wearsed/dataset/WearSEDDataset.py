@@ -7,7 +7,7 @@ from wearsed.dataset.Recording import Recording
 from wearsed.dataset.utils import RESP_EVENT_TYPES
 
 class WearSEDDataset(Dataset):
-    def __init__(self, mesaid_path='wearsed/dataset/data_ids/', scoring_from='somnolyzer', signals_to_read=['HR', 'SpO2', 'Flow', 'Pleth'], return_recording=False, use_predicted_hypnogram=False):
+    def __init__(self, mesaid_path='wearsed/dataset/data_ids/', scoring_from='somnolyzer', signals_to_read=['HR', 'SpO2', 'Flow', 'Pleth'], return_recording=False, use_predicted_hypnogram=False, denoised_ppg='none'):
         if not os.path.isfile(mesaid_path + 'mesa_root.txt') or not os.path.isfile(mesaid_path + f'mesa_ids_{scoring_from}.csv'):
             raise Exception(f'MESA IDs from {scoring_from} not loaded. Run `wearsed/dataset/data_ids/load_mesa.py <MESA ROOT PATH> {scoring_from}`.')
     
@@ -22,6 +22,7 @@ class WearSEDDataset(Dataset):
         self.signals_to_read         = signals_to_read
         self.return_recording        = return_recording
         self.use_predicted_hypnogram = use_predicted_hypnogram
+        self.denoised_ppg            = denoised_ppg
 
     def __len__(self):
         return len(self.mesa_ids)
@@ -32,7 +33,7 @@ class WearSEDDataset(Dataset):
     
     def from_id(self, mesa_id):
         subject_info = self.subject_infos.loc[mesa_id]
-        recording = Recording(mesa_id, subject_info, signals_to_read=self.signals_to_read, scoring_from=self.scoring_from, events_as_list=self.return_recording, use_predicted_hypnogram=self.use_predicted_hypnogram)
+        recording = Recording(mesa_id, subject_info, signals_to_read=self.signals_to_read, scoring_from=self.scoring_from, events_as_list=self.return_recording, use_predicted_hypnogram=self.use_predicted_hypnogram, denoised_ppg=self.denoised_ppg)
 
         if self.return_recording:
             return recording

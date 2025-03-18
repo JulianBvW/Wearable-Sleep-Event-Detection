@@ -27,6 +27,7 @@ parser.add_argument('--multi-batch-size', help='how many different recordings pe
 parser.add_argument('--seq-length', help='length of the individual segments parsed to the model', default=30*60, type=int)
 parser.add_argument('--use-attention', help='what attention parts should be used [gates,bottleneck]', default='', type=str, required=False)
 parser.add_argument('--use-predicted-hypnogram', help='use the predicted hypnogram instead of ground truth', action='store_true')
+parser.add_argument('--denoised-ppg', help='which denoising strategy to use if wanted [lowpass,bandpass,wavelet_[db4,dmey,haar]]', default='none', type=str, required=False)
 args = parser.parse_args()
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

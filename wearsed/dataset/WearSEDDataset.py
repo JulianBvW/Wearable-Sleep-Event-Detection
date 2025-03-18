@@ -49,36 +49,3 @@ class WearSEDDataset(Dataset):
         event_or_not = torch.Tensor(recording.event_df[RESP_EVENT_TYPES].any(axis=1).astype(int))
 
         return (hypnogram, spo2, pleth), event_or_not
-
-def process_higher_freqs(signal, freq):
-    list_mean = []
-    list_std  = []
-    list_min  = []
-    list_max  = []
-
-    for sec_idx in range(len(signal)//freq):
-        second = signal[sec_idx*freq:sec_idx*freq+freq]
-        list_mean.append(second.mean())
-        list_std.append(second.std())
-        list_min.append(second.min())
-        list_max.append(second.max())
-    
-    return torch.Tensor(list_mean), torch.Tensor(list_std), torch.Tensor(list_min), torch.Tensor(list_max)
-    
-def get_shakiness(signal, freq):
-    shake = []
-
-    for sec in range(len(signal)//freq):
-        cur_shake = 0
-        last_direc = False
-        last_point = signal[sec*freq]
-        for i in range(1, freq):
-            cur_point = signal[sec*freq+i]
-            cur_direc = cur_point > last_point  # True = Signal goes Up, False = Signal goes Down
-            if last_direc != cur_direc:
-                cur_shake += 1
-                last_direc = cur_direc
-            last_point = cur_point
-        shake.append(cur_shake)
-    
-    return torch.Tensor(shake)

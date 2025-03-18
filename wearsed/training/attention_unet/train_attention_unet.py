@@ -105,8 +105,6 @@ for epoch in range(args.epochs):
             targets.append(torch.tensor([-999]))
     
     predictions, targets = torch.cat(predictions), torch.cat(targets)
-    if epoch % 4 == 0:
-        pd.DataFrame({'targets': targets, 'predictions': predictions}).to_csv(OUTPUT_DIR + f'/test_preds_epoch_{epoch}.csv', index=False)
     best_f1, _, _ = get_best_f1_score(predictions, targets)
     
     print(f'Epoch {epoch + 1}, Train Loss: {train_loss / train_batches:.4f}, Test Loss: {test_loss / test_batches:.4f}, Best F1: {best_f1}')
@@ -114,6 +112,9 @@ for epoch in range(args.epochs):
     test_losses.append(test_loss / test_batches)
     best_f1s.append(best_f1)
 
+    # Save intermediate results
+    if epoch % 4 == 0:
+        pd.DataFrame({'targets': targets, 'predictions': predictions}).to_csv(OUTPUT_DIR + f'/test_preds_epoch_{epoch}.csv', index=False)
     if epoch % 10 == 0:
         torch.save(model.state_dict(), OUTPUT_DIR + f'/model_epoch_{epoch}.pth')
 

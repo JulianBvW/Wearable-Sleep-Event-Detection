@@ -3,6 +3,7 @@ Contains code to get a meaningful metric from "0 or 1" model output tensor
 '''
 
 from scipy.ndimage import binary_opening, binary_closing
+from sklearn.metrics import confusion_matrix
 import pandas as pd
 import numpy as np
 import torch
@@ -57,15 +58,18 @@ def calc_metrics(y_pred_list, y_true_list):
 
     return TPs, FPs, FNs
 
-def metric(y_pred, y_true, correctify=True):
-    y_pred_list = to_event_list(correct(y_pred)) if correctify else to_event_list(y_pred)
+def metric(y_pred, y_true, correctify=True, correctify_size=10):
+    y_pred_list = to_event_list(correct(y_pred, size=correctify_size)) if correctify else to_event_list(y_pred)
     y_true_list = to_event_list(y_true)  # [0,0,0,1,1,1,1,1,0,0,0,1,1,1,0] -> [{start: 10, end: 29}, {start: 100, ..}]
     metrics = calc_metrics(y_pred_list, y_true_list)
     return metrics
 
-def get_precision_recall(y_pred, y_true, threshold, correctify):
+def get_precision_recall(y_pred, y_true, threshold, correctify, correctify_size=10, event_based=True):
     y_pred = (y_pred > threshold)*1
-    TP, FP, FN = metric(y_pred, y_true, correctify=correctify)
+    if event_based:
+        TP, FP, FN = metric(y_pred, y_true, correctify=correctify, correctify_size=correctify_size)
+    else:
+        _, FP, FN, TP = confusion_matrix(y_true, y_pred).ravel()
     precision = TP / (TP + FP) if TP > 0 else 0
     recall = TP / (TP + FN) if TP > 0 else 0
     return precision, recall
@@ -75,7 +79,7 @@ def calc_f1_score(precision, recall):
         return 0
     return (2 * precision * recall) / (precision + recall)
 
-def get_best_f1_score(y_pred, y_true):
+def get_best_f1_score(y_pred, y_true, correctify_size=10, event_based=True):
     y_pred = y_pred[y_pred != -499]
     y_true = y_true[y_true != -999]
 
@@ -84,7 +88,7 @@ def get_best_f1_score(y_pred, y_true):
     best_f1_correctify = True
     for correctify in [True, False]:
         for thr in [i / 20 for i in range(1, 20)]:
-            precision, recall = get_precision_recall(y_pred, y_true, thr, correctify)
+            precision, recall = get_precision_recall(y_pred, y_true, thr, correctify, correctify_size=correctify_size, event_based=event_based)
             f1_score = calc_f1_score(precision, recall)
             if f1_score > best_f1:
                 best_f1 = f1_score

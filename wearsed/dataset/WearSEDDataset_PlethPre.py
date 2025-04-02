@@ -30,6 +30,10 @@ class WearSEDDataset(Dataset):
 
     def __getitem__(self, idx):
         mesa_id = self.mesa_ids[idx]
+        return self.from_id(mesa_id)
+    
+    def from_id(self, mesa_id):
+        subject_info = self.subject_infos.loc[mesa_id]
         subject_info = self.subject_infos.loc[mesa_id]
         recording = Recording(mesa_id, subject_info, signals_to_read=self.signals_to_read, scoring_from=self.scoring_from, events_as_list=self.return_recording)
 

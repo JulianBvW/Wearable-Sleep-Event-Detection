@@ -24,7 +24,7 @@ conda activate wearsed
 
 Install packages and the the project:
 ```bash
-pip install numpy pandas tqdm pyEDFlib lxml matplotlib torch torchvision torchaudio scikit-learn scikit-image ipykernel
+pip install numpy pandas tqdm pyEDFlib lxml matplotlib torch torchvision torchaudio scikit-learn scikit-image ipykernel h5py positional-encodings
 pip install -e .
 ```
 

@@ -95,3 +95,30 @@ def get_best_f1_score(y_pred, y_true, correctify_size=10, event_based=True):
                 best_f1_thr = thr
                 best_f1_correctify = correctify
     return best_f1, best_f1_thr, best_f1_correctify
+
+def combine_fold_results(run, folds, epoch):
+    outputs = []
+    for fold in folds:
+        output = pd.read_csv(f'../wearsed/training/attention_unet/output/{run}/f-{fold}/test_preds_epoch_{epoch}.csv')
+        outputs.append(output)
+    output = pd.concat(outputs, ignore_index=True)
+    y_pred, y_true = output['predictions'], output['targets']
+    return y_pred, y_true
+
+def get_ahis(y_pred, y_true, thr, correctify=False, correctify_size=10):
+    ahis_pred, ahis_true = [], []
+    recording_stops = list(y_true[y_true == -999].index)
+    for start, end in zip([0] + recording_stops, recording_stops):
+        ahi_pred, ahi_true = get_ahis_single_recording(y_pred[start+1:end], y_true[start+1:end], thr, correctify=correctify, correctify_size=correctify_size)
+        ahis_pred.append(ahi_pred)
+        ahis_true.append(ahi_true)
+    return ahis_pred, ahis_true
+
+def get_ahis_single_recording(y_pred, y_true, thr, correctify=False, correctify_size=10):
+    y_pred = (y_pred > thr)*1  # TODO remove events while wake?
+    y_pred_list = to_event_list(correct(y_pred, size=correctify_size)) if correctify else to_event_list(y_pred)
+    y_true_list = to_event_list(y_true)
+    tst_in_h = len(y_true) / 60 / 60  # TODO Calculate this from hypnogram!
+    ahi_pred = len(y_pred_list) / tst_in_h
+    ahi_true = len(y_true_list) / tst_in_h
+    return ahi_pred, ahi_true

@@ -2,6 +2,7 @@
 Class to capture all relevant recordings, annotations, and subject info from the PSG
 '''
 
+import h5py
 import pyedflib
 import numpy as np
 import pandas as pd
@@ -11,10 +12,10 @@ import matplotlib.patches as mpatches
 from matplotlib.ticker import FuncFormatter
 
 from wearsed.dataset.Event import Event
-from wearsed.dataset.utils import from_clock, to_clock, EVENT_COLORS, EVENT_TYPES
+from wearsed.dataset.utils import from_clock, to_clock, to_length, EVENT_COLORS, EVENT_TYPES
 
 class Recording():
-    def __init__(self, subject_id, subject_info=None, signals_to_read=['HR', 'SpO2', 'Flow', 'Pleth'], scoring_from='somnolyzer', events_as_list=False):
+    def __init__(self, subject_id, subject_info=None, signals_to_read=['HR', 'SpO2', 'Flow', 'Pleth'], scoring_from='somnolyzer', events_as_list=False, use_predicted_hypnogram=False, denoised_ppg='none'):
         self.id = subject_id
 
         path_dataset = '/vol/sleepstudy/datasets/mesa/'  # TODO make modular as argument
@@ -22,28 +23,40 @@ class Recording():
         path_scoring = path_dataset + f'scorings/{scoring_from}/'
         path_subject = path_dataset + 'datasets/mesa-sleep-harmonized-dataset-0.7.0.csv'
 
-        self.load_psg(path_psg, signals_to_read=signals_to_read)
+        self.load_psg(path_psg, signals_to_read=signals_to_read, denoised_ppg=denoised_ppg, path_dataset=path_dataset)
         self.load_scorings(path_scoring, subject_id, events_as_list)
         self.load_subject_data(path_subject, subject_id, subject_info)
 
-        self.post_process()
+        self.post_process(use_predicted_hypnogram, path_dataset)
 
     def get_event_count(self, event_type):
-        assert len(self.events) > 0, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
+        assert self.events is not None, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
         return len(self.get_events(event_type))
 
     def get_events(self, event_type):
-        assert len(self.events) > 0, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
+        assert self.events is not None, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
         event_types = event_type if type(event_type) is list else [event_type]
         return list(filter(lambda event: event.type in event_types, self.events))
 
     def get_ahi(self):  # Apnea Hypopnea Index
-        assert len(self.events) > 0, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
+        assert self.events is not None, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
         return self.get_event_count(['HYP', 'OSA', 'CSA']) / (self.total_sleep_time_in_sec / 60 / 60)
 
     def get_ari(self):  # Arousal Index
-        assert len(self.events) > 0, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
+        assert self.events is not None, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
         return self.get_event_count(['ARO']) / (self.total_sleep_time_in_sec / 60 / 60)
+
+    def get_ahi_severity_class(self):
+        assert self.events is not None, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
+        ahi = self.get_ahi()
+
+        if ahi < 5:   # Normal
+            return 0
+        if ahi < 15:  # Mild
+            return 1
+        if ahi < 30:  # Moderate
+            return 2
+        return 3      # Severe
 
     def look_at(self, time=None, window_size=None, events=EVENT_TYPES):
         assert len(self.events) > 0, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
@@ -97,7 +110,7 @@ class Recording():
         plt.tight_layout()
         plt.show()
 
-    def load_psg(self, path_psg, signals_to_read):
+    def load_psg(self, path_psg, signals_to_read, denoised_ppg='none', path_dataset=''):
         edf_reader = pyedflib.EdfReader(path_psg)
 
         signal_labels = edf_reader.getSignalLabels()
@@ -108,15 +121,20 @@ class Recording():
             if signal_labels[i] in signals_to_read:
                 self.psg[signal_labels[i]] = pd.Series(edf_reader.readSignal(i))
                 self.psg_freqs[signal_labels[i]] = int(edf_reader.getSampleFrequency(i))
-        
+
         edf_reader.close()
+        
+        if denoised_ppg != 'none':
+            with h5py.File(f'{path_dataset}/preprocessing/pleth/{denoised_ppg}/{self.id:04}.hdf5', 'r') as f:
+                self.psg['Pleth'] = pd.Series(np.array(f['signal']), dtype=float)
 
     def load_scorings(self, path_scoring, subject_id, events_as_list):
         self.hypnogram = pd.read_csv(path_scoring + f'hypnogram/hypnogram-{subject_id:04}.csv', header=None)[0]
         self.event_df  = pd.read_csv(path_scoring + f'events/events-{subject_id:04}.csv')
 
-        self.events = []
+        self.events = None
         if events_as_list:
+            self.events = []
             event_list = pd.read_csv(path_scoring + f'event_list/event-list-{subject_id:04}.csv')
             for _, event in event_list.iterrows():
                 self.events.append(Event((event['Type'], event['Start'], event['End']), direct=True))
@@ -136,19 +154,27 @@ class Recording():
             'ever_smoked': subject_info.loc['nsrr_ever_smoker']
         }
     
-    def post_process(self):
+    def post_process(self, use_predicted_hypnogram=False, path_dataset=None):
         ''' Do postprocessing after loading
         - Calculate total sleep time (TST)
         - Cut off the awake phase at the end
-        - (TODO) Downsample ">1Hz" signals
+        - (Optional) Switch to predicted hypnogram
         '''
 
         awake_phases = self.hypnogram[self.hypnogram != 0]
         self.total_sleep_time_in_sec = len(awake_phases)
 
-        end_point = awake_phases.index[-1]+10
+        end_point = min(awake_phases.index[-1]+10, len(self.hypnogram))
         self.hypnogram = self.hypnogram[0:end_point]
         self.event_df = self.event_df[0:end_point]
         for signal in self.psg.keys():
             dyn_end_point = end_point * self.psg_freqs[signal]
-            self.psg[signal] = self.psg[signal][0:dyn_end_point]
+            self.psg[signal] = to_length(self.psg[signal], dyn_end_point)
+        
+        if use_predicted_hypnogram:
+            predicted_hypnogram = pd.read_csv(f'{path_dataset}/predicted_hypnogram/mesa-{self.id:04}-1.csv', index_col='ts')['PPG_4cl']
+            predicted_hypnogram[predicted_hypnogram == 'W'] = 0
+            predicted_hypnogram[predicted_hypnogram == 'N1/N2'] = 1
+            predicted_hypnogram[predicted_hypnogram == 'N3'] = 3
+            predicted_hypnogram[predicted_hypnogram == 'R'] = 5
+            self.hypnogram = to_length(pd.Series(np.repeat(predicted_hypnogram.values, 30)), end_point)

@@ -14,7 +14,7 @@ class WearSEDDataset(Dataset):
         with open(mesaid_path + 'mesa_root.txt', 'r') as f:
             self.mesa_root = f.readline()
         
-        self.mesa_ids = pd.read_csv(mesaid_path + f'mesa_ids_{scoring_from}.csv', header=None)[0]
+        self.mesa_ids = pd.read_csv(mesaid_path + f'mesa_ids_{scoring_from}.csv')['id']
         self.subject_infos = pd.read_csv(self.mesa_root + 'datasets/mesa-sleep-harmonized-dataset-0.7.0.csv')
         self.subject_infos.set_index('mesaid', inplace=True)
 
@@ -30,6 +30,10 @@ class WearSEDDataset(Dataset):
 
     def __getitem__(self, idx):
         mesa_id = self.mesa_ids[idx]
+        return self.from_id(mesa_id)
+    
+    def from_id(self, mesa_id):
+        subject_info = self.subject_infos.loc[mesa_id]
         subject_info = self.subject_infos.loc[mesa_id]
         recording = Recording(mesa_id, subject_info, signals_to_read=self.signals_to_read, scoring_from=self.scoring_from, events_as_list=self.return_recording)
 
@@ -50,11 +54,12 @@ class WearSEDDataset(Dataset):
             pleth_vae_latents = pd.read_csv(f'/vol/sleepstudy/datasets/mesa/features/pleth_vae_latents/{mesa_id:04}.csv')
             for key in pleth_vae_latents.keys():
                 inputs.append(pleth_vae_latents[key])
-        inputs = [torch.tensor(signal, dtype=torch.float) for signal in inputs]
+        shortest_len = min([len(signal) for signal in inputs])
+        inputs = [torch.tensor(signal, dtype=torch.float)[:shortest_len] for signal in inputs]
         inputs = torch.stack(inputs)
 
         # Output
-        event_or_not = torch.Tensor(recording.event_df[RESP_EVENT_TYPES].any(axis=1).astype(int))
+        event_or_not = torch.Tensor(recording.event_df[RESP_EVENT_TYPES].any(axis=1).astype(int))[:shortest_len]
 
         return inputs, event_or_not  # [15, len], [len]
 

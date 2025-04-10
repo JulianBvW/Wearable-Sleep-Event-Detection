@@ -3,110 +3,48 @@ Train code for training the Attention U-Net model
 '''
 
 from wearsed.training.utils import show_script_info
+from wearsed.training.metric import get_best_f1_score
+from wearsed.training.kfold.load_kfold import get_fold
 from wearsed.dataset.WearSEDDataset import WearSEDDataset
+from wearsed.training.batching import get_multi_batch, get_test_batch
 from wearsed.models.attention_unet.AttentionUNet import AttentionUNet
 
 from argparse import ArgumentParser
-from random import shuffle
 from tqdm import tqdm
 import pandas as pd
+import numpy as np
 import os
 
-import torch.nn.functional as F
 import torch.nn as nn
 import torch
 
 parser = ArgumentParser(description='Train code for training the Attention U-Net model')
-parser.add_argument('--epochs', help='number of epochs', default=50, type=int)
+parser.add_argument('--epochs', help='number of epochs', default=30, type=int)
+parser.add_argument('--fold-nr', help='which fold to use with k-fold', default=0, type=int, required=True)
 parser.add_argument('--batch-size', help='how many random sequences per recording', default=32, type=int)
+parser.add_argument('--out-dir', help='name of the output directory', default=None, type=str, required=True)
 parser.add_argument('--multi-batch-size', help='how many different recordings per batch', default=4, type=int)
 parser.add_argument('--seq-length', help='length of the individual segments parsed to the model', default=30*60, type=int)
-parser.add_argument('--out-dir', help='name of the output directory', default=None, type=str, required=True)
 parser.add_argument('--use-attention', help='what attention parts should be used [gates,bottleneck]', default='', type=str, required=False)
+parser.add_argument('--use-predicted-hypnogram', help='use the predicted hypnogram instead of ground truth', action='store_true')
+parser.add_argument('--denoised-ppg', help='which denoising strategy to use if wanted [lowpass,bandpass,wavelet_[db4,dmey,haar]]', default='none', type=str, required=False)
 args = parser.parse_args()
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+torch.manual_seed(42)
+np.random.seed(42)
 
 OVERLAP_WINDOW = 60  # 1 minute
-
-def get_random_start(labels, max_time, seq_length):
-    start = torch.randint(0, max_time, (1,)).item()
-    end = start + seq_length
-    return start, labels[start:end].sum() > 0
-
-def get_batch(signals, labels, batch_size, seq_length):
-    (hypnogram, spo2, pleth) = signals
-    max_time = len(labels) - seq_length
-
-    tries = 0
-    random_starts = []
-    while len(random_starts) < batch_size:
-        random_start, has_positive_class = get_random_start(labels, max_time, seq_length)
-        if has_positive_class or tries >= batch_size // 2:
-            random_starts.append(random_start)
-        tries += 1
-    shuffle(random_starts)
-
-    batch_signals = []
-    batch_labels = []
-    for start in random_starts:
-        end = start + seq_length
-        seq_hypnogram = hypnogram[start:end].view((1, -1))
-        seq_spo2 = spo2[start:end].view((1, -1))
-        seq_pleth = pleth[start*256:end*256].view((256, -1))
-        try:
-            combined_signal = torch.cat([seq_hypnogram, seq_spo2, seq_pleth], dim=0)
-        except:
-            print(f'### FAIL at {start}')
-            raise Exception(f'### FAIL at {start}')
-        batch_signals.append(combined_signal)
-        batch_labels.append(labels[start:end])
-
-    return torch.stack(batch_signals), torch.stack(batch_labels)
-
-def get_multi_batch(dataset, i, multi_batch_size, batch_size, seq_length):
-    multi_batch_signals = []
-    multi_batch_labels  = []
-    for j in range(multi_batch_size):
-        (hypnogram, spo2, pleth), event_or_not = dataset[multi_batch_size*i+j]
-        try:
-            batch_signal, batch_label = get_batch((hypnogram, spo2, pleth), event_or_not, batch_size, seq_length)
-        except:
-            print(f'### get_multi_batch at {i=}, {j=}')
-            raise Exception(f'### get_multi_batch at {i=}, {j=}')
-        multi_batch_signals.append(batch_signal)
-        multi_batch_labels.append(batch_label)
-    return torch.cat(multi_batch_signals), torch.cat(multi_batch_labels)
-
-def get_test_batch(datapoint, seq_length):
-    (hypnogram, spo2, pleth), event_or_not = datapoint
-    step = seq_length - 2 * OVERLAP_WINDOW
-    batch_signals = []
-    batch_labels  = []
-    for start in range(0, len(event_or_not), step):
-        end = start + seq_length
-        seq_hypnogram = hypnogram[start:end].view((1, -1))
-        seq_spo2 = spo2[start:end].view((1, -1))
-        seq_pleth = pleth[start*256:end*256].view((256, -1))
-        try:
-            combined_signal = torch.cat([seq_hypnogram, seq_spo2, seq_pleth], dim=0)
-        except:
-            print(f'### FAIL at {start}')
-            raise Exception(f'### FAIL at {start}')
-        batch_signals.append(combined_signal)
-        batch_labels.append(event_or_not[start:end])
-    del batch_signals[-1]
-    del batch_labels[-1]
-    return torch.stack(batch_signals), torch.stack(batch_labels)
-
+FOLD_NAME = 'fold-4-somnolyzer'
+SEED = 42
 
 # Output folder
-OUTPUT_DIR = f'wearsed/training/attention_unet/output/{args.out_dir}/'
+OUTPUT_DIR = f'wearsed/training/attention_unet/output/{args.out_dir}/f-{args.fold_nr}/'
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Dataset
-full_dataset = WearSEDDataset(signals_to_read=['SpO2', 'Pleth'])
-train_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [0.8, 0.2])
+full_dataset = WearSEDDataset(signals_to_read=['SpO2', 'Pleth'], use_predicted_hypnogram=args.use_predicted_hypnogram, denoised_ppg=args.denoised_ppg)
+train_ids, test_ids = get_fold(FOLD_NAME, args.fold_nr, seed=SEED)
 
 # Model, Optimizer, Criterion
 model = AttentionUNet(in_channels=6, use_attention=args.use_attention.split(',')).to(device)
@@ -118,27 +56,20 @@ show_script_info(args, model, 2+256)
 # Training Loop
 train_losses = []
 test_losses = []
+best_f1s = []
 
 train_fails = 0
 test_fails = 0
 
 for epoch in range(args.epochs):
 
-    train_fails = 0
-    test_fails = 0
-
     # Taining
     model.train()
-    train_loss = 0
-    for i in tqdm(range(len(train_dataset) // args.multi_batch_size)):
+    train_loss, train_batches = 0, 0
+    for i in tqdm(range(len(train_ids) // args.multi_batch_size)):
         optimizer.zero_grad()
 
-        try:
-            x, y = get_test_batch(train_dataset[i], seq_length=args.seq_length)
-        except:
-            print(f'### Failed at TRAINING {i}')
-            train_fails += 1
-            continue
+        x, y = get_multi_batch(full_dataset, train_ids, i, multi_batch_size=args.multi_batch_size, batch_size=args.batch_size, seq_length=args.seq_length)
         x, y = x.to(device), y.to(device)
         
         # Forward pass
@@ -147,23 +78,18 @@ for epoch in range(args.epochs):
         # Loss computation
         loss = criterion(y_hat, y)
         loss.backward()
-        train_loss += loss.item()
+        train_loss += loss.item() * y.shape[0]
+        train_batches += y.shape[0]
         optimizer.step()
     
     # Testing
     model.eval()
-    test_loss = 0
-    predictions = []
-    targets = []
+    test_loss, test_batches = 0, 0
+    predictions, targets = [], []
     with torch.no_grad():
-        for i in tqdm(range(len(test_dataset))):
+        for i in tqdm(range(len(test_ids))):
             
-            try:
-                x, y = get_multi_batch(train_dataset, i, multi_batch_size=args.multi_batch_size, batch_size=args.batch_size, seq_length=args.seq_length)
-            except:
-                print(f'### Failed at TEST {i}')
-                test_fails += 1
-                continue
+            x, y = get_test_batch(full_dataset.from_id(test_ids[i]), seq_length=args.seq_length, overlap_window=OVERLAP_WINDOW)
             x, y = x.to(device), y.to(device)
 
             # Forward pass
@@ -172,30 +98,24 @@ for epoch in range(args.epochs):
             
             # Loss computation
             loss = criterion(y_hat, y)
-            test_loss += loss.item()
-            predictions.append(prediction.cpu().flatten()[OVERLAP_WINDOW:args.seq_length-OVERLAP_WINDOW])
+            test_loss += loss.item() * y.shape[0]
+            test_batches += y.shape[0]
+            predictions.append(prediction.cpu()[:, OVERLAP_WINDOW:args.seq_length-OVERLAP_WINDOW].flatten())
             predictions.append(torch.tensor([-499]))
-            targets.append(y.cpu().flatten()[OVERLAP_WINDOW:args.seq_length-OVERLAP_WINDOW])
+            targets.append(y.cpu()[:, OVERLAP_WINDOW:args.seq_length-OVERLAP_WINDOW].flatten())
             targets.append(torch.tensor([-999]))
     
-    predictions = torch.cat(predictions)
-    targets = torch.cat(targets)
-    pd.DataFrame({'targets': targets, 'predictions': predictions}).to_csv(OUTPUT_DIR + f'/test_preds_epoch_{epoch}.csv', index=False)
-    #tn, fp, fn, tp = confusion_matrix(targets, predictions).ravel()
-    #accuracy = (tn+tp)/(tn+fp+fn+tp)
+    predictions, targets = torch.cat(predictions), torch.cat(targets)
+    best_f1, _, _ = get_best_f1_score(predictions, targets)
     
-    #print(f'Epoch {epoch + 1}, Train Loss: {train_loss / len(train_dataset):.4f}, Test Loss: {test_loss / len(test_dataset):.4f}, Test Accuracy: {accuracy*100:.3}% ({tn=}, {fp=}, {fn=}, {tp=})')
-    train_ds_len = len(train_dataset) - (len(train_dataset) % args.multi_batch_size) - train_fails*args.multi_batch_size
-    test_ds_len  = len(test_dataset)  - (len(test_dataset) % args.multi_batch_size) - test_fails*args.multi_batch_size
-    print(f'Epoch {epoch + 1}, Train Loss: {train_loss / train_ds_len:.4f}, Test Loss: {test_loss / test_ds_len:.4f}')
-    train_losses.append(train_loss / train_ds_len)
-    test_losses.append(test_loss / test_ds_len)
-    # cm_tn.append(tn)
-    # cm_fp.append(fp)
-    # cm_fn.append(fn)
-    # cm_tp.append(tp)
-    # accuracies.append(accuracy)
+    print(f'Epoch {epoch + 1}, Train Loss: {train_loss / train_batches:.4f}, Test Loss: {test_loss / test_batches:.4f}, Best F1: {best_f1}')
+    train_losses.append(train_loss / train_batches)
+    test_losses.append(test_loss / test_batches)
+    best_f1s.append(best_f1)
 
+    # Save intermediate results
+    if epoch % 4 == 0:
+        pd.DataFrame({'targets': targets, 'predictions': predictions}).to_csv(OUTPUT_DIR + f'/test_preds_epoch_{epoch}.csv', index=False)
     if epoch % 10 == 0:
         torch.save(model.state_dict(), OUTPUT_DIR + f'/model_epoch_{epoch}.pth')
 
@@ -204,11 +124,7 @@ torch.save(model.state_dict(), OUTPUT_DIR + '/model_final.pth')
 results = pd.DataFrame({
     'train_losses': train_losses,
     'test_losses': test_losses,
-    # 'cm_tn': cm_tn,
-    # 'cm_fp': cm_fp,
-    # 'cm_fn': cm_fn,
-    # 'cm_tp': cm_tp,
-    # 'accuracies': accuracies
+    'best_f1': best_f1s
 })
 results.to_csv(OUTPUT_DIR + '/losses.csv', index=False)
 

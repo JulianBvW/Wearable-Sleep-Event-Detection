@@ -5,7 +5,12 @@ import pandas as pd
 
 runs = [
     ('final_default', 28, [0, 1, 2, 3]),
-    ('final_no_spo2', 28, [0, 1, 2, 3])
+    ('final_no_spo2', 28, [0, 1, 2, 3]),
+    ('final_reduce_lr', 28, [0, 1, 2, 3]),
+    ('final_plethpre', 28, [2, 3]),
+    ('final_plethpre_se', 28, [0, 1, 2, 3]),
+    ('mulstiscale_cnn', 24, [0, 1, 2, 3]),
+    ('mulstiscale_cnn_se', 16, [0, 1, 2, 3])
 ]
 
 run_list = []

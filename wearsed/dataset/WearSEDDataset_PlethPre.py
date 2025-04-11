@@ -7,7 +7,7 @@ from wearsed.dataset.Recording import Recording
 from wearsed.dataset.utils import RESP_EVENT_TYPES
 
 class WearSEDDataset(Dataset):
-    def __init__(self, mesaid_path='wearsed/dataset/data_ids/', scoring_from='somnolyzer', signals_to_read=['HR', 'SpO2', 'Flow', 'Pleth'], return_recording=False, pleth_statistical=False, pleth_vae_latents=False):
+    def __init__(self, mesaid_path='wearsed/dataset/data_ids/', scoring_from='somnolyzer', signals_to_read=['HR', 'SpO2', 'Flow', 'Pleth'], return_recording=False, use_predicted_hypnogram=False, pleth_statistical=False, pleth_vae_latents=False):
         if not os.path.isfile(mesaid_path + 'mesa_root.txt') or not os.path.isfile(mesaid_path + f'mesa_ids_{scoring_from}.csv'):
             raise Exception(f'MESA IDs from {scoring_from} not loaded. Run `wearsed/dataset/data_ids/load_mesa.py <MESA ROOT PATH> {scoring_from}`.')
     
@@ -22,6 +22,7 @@ class WearSEDDataset(Dataset):
         self.signals_to_read  = signals_to_read
         self.return_recording = return_recording
 
+        self.use_predicted_hypnogram = use_predicted_hypnogram
         self.pleth_statistical = pleth_statistical
         self.pleth_vae_latents = pleth_vae_latents
 
@@ -35,13 +36,13 @@ class WearSEDDataset(Dataset):
     def from_id(self, mesa_id):
         subject_info = self.subject_infos.loc[mesa_id]
         subject_info = self.subject_infos.loc[mesa_id]
-        recording = Recording(mesa_id, subject_info, signals_to_read=self.signals_to_read, scoring_from=self.scoring_from, events_as_list=self.return_recording)
+        recording = Recording(mesa_id, subject_info, signals_to_read=self.signals_to_read, scoring_from=self.scoring_from, events_as_list=self.return_recording, use_predicted_hypnogram=self.use_predicted_hypnogram)
 
         if self.return_recording:
             return recording
         
         ### Preprocesing for Baseline model
-        # 3 inputs: Hypnogram (1Hz), SpO2 (1Hz), Pleth (256Hz)
+        # 3 inputs: Hypnogram (1Hz), SpO2 (1Hz), Pleth (1Hz, 13-dim)
         # 1 output: Event vs No Event (1Hz)
 
         # Inputs

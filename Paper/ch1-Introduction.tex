@@ -1,77 +1,19 @@
 \chapter{Introduction \label{Chapter-Intro}}
 
-A recent study estimated that over 900 million adults globally are affected
- by the common group of respiratory sleep disorders called Sleep-disordered
- breathing (SDB) \cite{benjafield2019estimation}, or in particular, Sleep Apnea, which clinical
- manifestations include sleepiness, fatigue, cardiovascular disease, and
- hypertension. SDB is even linked to higher cases of diabetes, stroke
- occurrences and increased morbidity \cite{dempsey2010dempsey,patil2007adult,young2002epidemiology}.
-Diagnosis of the disorder relies on detecting repeated respiratory events
- in which airflow is either reduced (hypopnea) or entirely paused (apnea)
- during sleep \cite{gould2012sleep,dempsey2010dempsey}. These events can further be categorized into
- obstructive or central origin, depending on if the apnea happens due to
- a physical blockage of the upper airway or if caused by the brain failing
- to signal breathing resulting in missing breathing effort. In case the
- event shows features of both, it is classified as a mixed.
-Dividing the number of events by the total sleep time (TST) gives the
- Apnea-Hypopnea-Index (AHI), which indicates the severity of the disorder.
+A recent study estimated that over 900 million adults globally are affected by the common group of respiratory sleep disorders called Sleep-disordered breathing (SDB) \cite{benjafield2019estimation}, or in particular, Sleep Apnea, which clinical manifestations include sleepiness, fatigue, cardiovascular disease, and hypertension. SDB is even linked to higher cases of diabetes, stroke occurrences and increased morbidity \cite{dempsey2010dempsey,patil2007adult,young2002epidemiology}.
+Diagnosis of the disorder relies on detecting repeated respiratory events in which airflow is either reduced (hypopnea) or entirely paused (apnea) during sleep \cite{gould2012sleep,dempsey2010dempsey}. These events can further be categorized into obstructive or central origin, depending on if the apnea happens due to a physical blockage of the upper airway or if caused by the brain failing to signal breathing resulting in missing breathing effort. In case the event shows features of both, it is classified as a mixed.Dividing the number of events by the total sleep time (TST) gives the Apnea-Hypopnea-Index (AHI), which indicates the severity of the disorder.
 
-Gold standard for detecting SDB in Polysomnography (PSG) which captures
- physical and biological signals like heart (electrocardiogram, ECG) and
- brain (electroencephalogram, EGG) activity, airflow, peripheral oxygen
- saturation (SpO2), chest and abdominal movements, sleeping position, and
- blood volume changes (photoplethysmographie, PPG).
-This approach comes with a few downsides: Firstly, due to the vast amount
- of sensors and specialized equipment, setup and analysis of the full PSG
- is costly, requires human experts and might impact sleep quality.
- Secondly, looking only at a single night might have low diagnostic
- meaningfulness \cite{toussaint1995first} and the analysis of multiple nights is needed. All
- this contributes to the fact that an estimated 93\% of women and 82\%
- of men with at least moderate SDB are undiagnosed \cite{young1997estimation}.
+Gold standard for detecting SDB in Polysomnography (PSG) which captures physical and biological signals like heart (electrocardiogram, ECG) and brain (electroencephalogram, EGG) activity, airflow, peripheral oxygen saturation (SpO2), chest and abdominal movements, sleeping position, and blood volume changes (photoplethysmographie, PPG).
+This approach comes with a few downsides: Firstly, due to the vast amount of sensors and specialized equipment, setup and analysis of the full PSG is costly, requires human experts and might impact sleep quality. Secondly, looking only at a single night might have low diagnostic meaningfulness \cite{toussaint1995first} and the analysis of multiple nights is needed. All this contributes to the fact that an estimated 93\% of women and 82\% of men with at least moderate SDB are undiagnosed \cite{young1997estimation}.
 
-In 2000, PhysioNet started interest in the topic of less complex apnea
- detection by holding a competition on their Apnea-ECG Dataset that
- only consists of labeled ECG recordings split into one-minute epochs.
- Although presented models reached high performances, later studies showed
- poor generalizability for these models and indicated that the dataset
- doesn't fully cover the broad spectrum of apneic events \cite{papini2018generalizability}. Therefore,
- in the last decades, a wide range of sleep disorder datasets and apnea
- detection architectures were published that focused on generalizability.
-For instance, Olsen et al. \cite{olsen2020robust} used bidirectional GRUs
- on ECG data to achieve a sensitivity (Se) of 68.7\%, a precision (Pr)
- of 69.1\%, and an F1-score of 66.6\% on their self-defined event-level
- metric and an AHI-correlation of $R^2$ = 0.829. Xie et al. \cite{xie2023use}
- later validated Olsens model on the SOMNIA dataset and achieved an
- F1-score of 70.8\% using the PSG-computed hypnogram and an F1-score of
- 0.631 with their Multi-Task model that computed sleep stages based on
- ECG and respiratory effort (RE) only \cite{xie2024multi}. Also using 
- ECG and RE, Fonseca et al. \cite{fonseca2024estimating} achieved intraclass
- correlation coefficient of 0.91 across different datasets.
+In 2000, PhysioNet started interest in the topic of less complex apnea detection by holding a competition on their Apnea-ECG Dataset that only consists of labeled ECG recordings split into one-minute epochs. Although presented models reached high performances, later studies showed poor generalizability for these models and indicated that the dataset doesn't fully cover the broad spectrum of apneic events \cite{papini2018generalizability}. Therefore, in the last decades, a wide range of sleep disorder datasets and apnea detection architectures were published that focused on generalizability.
+For instance, Olsen et al. \cite{olsen2020robust} used bidirectional GRUs on ECG data to achieve a sensitivity (Se) of 68.7\%, a precision (Pr) of 69.1\%, and an F1-score of 66.6\% on their self-defined event-level metric and an AHI-correlation of $R^2$ = 0.829. Xie et al. \cite{xie2023use} later validated Olsens model on the SOMNIA dataset and achieved an F1-score of 70.8\% using the PSG-computed hypnogram and an F1-score of 0.631 with their Multi-Task model that computed sleep stages based on ECG and respiratory effort (RE) only \cite{xie2024multi}. Also using  ECG and RE, Fonseca et al. \cite{fonseca2024estimating} achieved intraclass correlation coefficient of 0.91 across different datasets.
 
-Using the signal on which sleep apnea is mainly defined on, Airflow, also
- helps to increase performance greatly. Li et al. \cite{li2023deep} achieved
- an F1-score of 85.7\% on classifying one-minute segments of Airflow and ECG.
- Later, Yook et al. \cite{yook2024deep} used Airflow and SpO2 together to
- achieve an F1-score of 93\% on classifying 10-second segments converted
- into scalograms.
-Downsides to this approach includes that the nasal cannula, a thin tube
- placed under the nostrils, might be uncomfortable during sleep and hard
- to set up properly.
+Using the signal on which sleep apnea is mainly defined on, Airflow, also helps to increase performance greatly. Li et al. \cite{li2023deep} achieved an F1-score of 85.7\% on classifying one-minute segments of Airflow and ECG. Later, Yook et al. \cite{yook2024deep} used Airflow and SpO2 together to achieve an F1-score of 93\% on classifying 10-second segments converted into scalograms.
+Downsides to this approach includes that the nasal cannula, a thin tube placed under the nostrils, might be uncomfortable during sleep and hard to set up properly.
 
-One of the more simple signals to set up and record while sleep is PPG, which
- can be obtained through the use of a pulse oximeter that illuminates the skin
- to measure changes in light absorption.
-These devices come in a range of forms such as wrist-worn, like most
- modern smart-watch already have, or finger-worn, mounted typically on the
- index finger, which can also calculate SpO2.
-Lazazzera et al. \cite {lazazzera2020detection} used PPG and SpO2 signals
- to achieve a Sensitivity of 76.9\% and Specificity of 73.2\%, although their
- dataset only consisted of 96 patients without any kind of co-morbidity.
-With the same input signals, Wu et al. \cite{wu2024transformer} trained
- a trasnformer-based model on a dataset containing patients with
- co-morbidities and were able to validate their performance on PPG and SpO2
- signals measured by a Smart Ring resulting in an F1-score of 64.9\%.
+One of the more simple signals to set up and record while sleep is PPG, which can be obtained through the use of a pulse oximeter that illuminates the skin to measure changes in light absorption.
+These devices come in a range of forms such as wrist-worn, like most modern smart-watch already have, or finger-worn, mounted typically on the index finger, which can also calculate SpO2.
+Lazazzera et al. \cite {lazazzera2020detection} used PPG and SpO2 signals to achieve a Sensitivity of 76.9\% and Specificity of 73.2\%, although their dataset only consisted of 96 patients without any kind of co-morbidity.With the same input signals, Wu et al. \cite{wu2024transformer} trained a trasnformer-based model on a dataset containing patients with co-morbidities and were able to validate their performance on PPG and SpO2 signals measured by a Smart Ring resulting in an F1-score of 64.9\%.
 
-In this work, we present an event-level apnea detection model that relies
- solely on signals obtained by easy to use recording hardware, namely
- PPG and SpO2, and show the importance of correct sleep stage identification.
+In this work, we present an event-level apnea detection model that relies solely on signals obtained by easy to use recording hardware, namely PPG and SpO2, and show the importance of correct sleep stage identification.

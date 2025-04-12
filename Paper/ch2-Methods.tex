@@ -2,6 +2,15 @@
 
 \section{Dataset}
 
+The data we used in this work came from the Multi-Ethnic Study of Atherosclerosis (MESA) \cite{chen2015racial}, a large-scale sleep study aimed to investigate correlations between sleep quality, cardiovescular health, SDB, and other factors across different ethnic groups.
+Over 6,800 men and women from six different US communities were approached in the initial examination. For the final sleep exam ten years later, 288 participants were ineligible\footnote{due to undergoing apnea treatment, living to far away, or other reasons}, roughly 2,700 were not contacted, and roughly 1,500 refused to participate. From the 2,261 participants undergoing the sleep exam, 2,060 had full-night PSG recordings, 2,156 had actigraphy data, and 2,240 completed a sleep questionnaire.
+
+For the sleep event scoring, we used the automatic Somnolyzer system \todo{cite}, which scored events based on the recommended criteria from the American Academy of Sleep Medicine (AASM) \todo{cite}: apnea events were defined as a 90\% or greater reduction in airflow for at least 10 seconds, while hypopnea events were defined as a 30\% or greater reduction in airflow for at least 10 seconds, with either a $\geq 3\%$ oxygen desaturation or an associated arousal. \todo{obstructive vs central vs mixed?}
+
+As SDB events manifest differently accross sleep stages, we used a modified version of the hypnogram prediction model from Bakker et al. \cite{bakker2021estimating}, that used only PPG signals, ensuring that our model works doesn't depend on signals outside of the finger-worn PPG sensor setup. Comparing the predicted hypnogram\footnote{Bakker's model combined N1 and N2 stages into one, resulting in four stages: Wake, N1/N2, N3, and REM. For calculating the Kappa, Somnolyzer scorings were adjusted to the same format} with the Somnolyzer hypnogram, we achieved a Cohen's Kappa of 0.55, showing moderate agreement.
+
+Filtering the MESA participants for those with PPG and SpO2 data, Somnolyzer scorings, and available predicted hypnograms, we ended up with a dataset size of 1,880 participants. \todo{table ref} shows the demographic distribution of our dataset subset together with the generated folds. Similarly, \todo{table ref} shows the distribution of apnea event classes and the AHI severity classes, which are defined as follows: Normal (AHI < 5), Mild (5 <= AHI < 15), Moderate (15 <= AHI < 30), and Severe (AHI >= 30) \todo{make table}.
+
 \begin{itemize}
     \item Explain MESA (what Patients, how did they record the nights, ...)
     \item Statistical analysis (Count, Age, ...)
@@ -29,7 +38,7 @@
 
 \begin{itemize}
     \item Training Parameters (Optimizer, LR, BS, ...) and Setup (Machines, ...)
-    \item Seed and Cross-Validation
+    \item Seed and Cross-Validation (mainly balanced for AHI severity, but with seed 42 we got a good distribution fo demographic data in the folds)
     \item Train on 30min (?) segments. For Testing: Concat 30min Windows with Overlap for full night result.
     \item Correct results (like Olsen, 10sec minimum event and distance between events)
     \item Event-based metrics (Se, Pr, F1) and when to count TP, TN, FP, FN

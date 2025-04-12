@@ -64,12 +64,23 @@ The amount of different apnea classes is shown in table \ref{tab:dataset-apnea-c
     \caption{Total number of apnea events. \label{tab:dataset-apnea-classes}}
 \end{table}
 
-\section{Preprocessing}
+\section{Signals and Preprocessing}
+
+We used the PPG and SpO2 signals from the MESA dataset, which were recorded at 256Hz and 1Hz, respectively. A third input to the model is the hypnogram from Bakker et al. \cite{bakker2021estimating}, which was predicted at $\frac{1}{30}$Hz and on PPG only, ensuring that the model still relies solely on data it can retrieve from the PPG sensor in the real world.
+The PPG signal has been denoised using a lowpass filter with a cutoff frequency of 5Hz.
+
+\subsection*{PPG Preprocessing}
+
+To deal with the high temporal resolution of the PPG signal, we tested three different preprocessing methods that would transform the 256Hz signal into a 1Hz signal with multiple dimensions:
 
 \begin{itemize}
-    \item PPG [256Hz], SpO2 [1Hz], Hypnogram [1Hz]
-    \item For PPG: Statistical Analysis, Denoising, VAE?, Conv-Block
+    \item \textbf{Statistical}: On a 1Hz basis we extracted the mean, standard deviation, minimum, maximum, and mean peak interval of the PPG signal, resulting in a 5-dimensional representation of the PPG signal. Due to the nature of PPG showing the heartbeats at 1Hz, we used a sliding window of 5s around the 1Hz point to calculate the statistics.
+    \item \textbf{Variational Autoencoder}: The Variational Autoencoder (VAE) is an unsupervised generative model that learns to encode the input data into a lower-dimensional latent space and then reconstruct it back to the original space. The VAE consists of an encoder and a decoder, where the encoder maps the input data to a distribution in the latent space, and the decoder samples from this distribution to reconstruct the input. Using the same sliding window approach as in the statistical method, we trained the VAE to reconstruct the middle 1s from the 5s input window. With that, the encoder learns to compress the input into a lower temporal dimension while preserving the relevant information. For training the main SDB detector model, this encoder is used to transform the 256Hz PPG signal into a 1Hz signal with 8 dimensions.
+    \item \textbf{In-model Convolution Stack}: While the prior methods calculated the 1Hz representation of the PPG signal before training the model, we also tested a method that would use a stack of convolution to learn the 1Hz representation during training. The convolution stack consists of five \textit{double conv blocks} \todo{is the name ok so?}, which are composed of two 1D convolution layers with a kernel size of 3 or 5 \todo{write letters out or not?}, each followed by a batch normalization layer and ReLU activation. Between these blocks are max pooling layers with a kernel size of 4 resulting in the downsampling of the signal to 1Hz, while bringing the number of channels up from 1 to 8.
+    \todo{should I explain the whole model and every single line in more detail in the appendix?}
 \end{itemize}
+
+Each preprocessing method brings the PPG signal down to 1Hz with multiple dimensions, which is then stacked together with the 1Hz SpO2 signal and the hypnogram that was upsampled to 1Hz. The input to the detection model is therefore a 1Hz signal with $2+d$ dimensions, with d being the number of dimensions from the selected PPG preprocessing method(s). 
 
 \section{Model Architecture}
 

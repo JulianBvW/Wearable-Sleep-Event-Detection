@@ -9,8 +9,8 @@ runs = [
     ('final_reduce_lr', 28, [0, 1, 2, 3]),
     ('final_plethpre', 28, [2, 3]),
     ('final_plethpre_se', 28, [0, 1, 2, 3]),
-    ('mulstiscale_cnn', 24, [0, 1, 2, 3]),
-    ('mulstiscale_cnn_se', 16, [0, 1, 2, 3])
+    ('final_mulstiscale_cnn', 28, [0, 1, 2, 3]),
+    ('final_mulstiscale_cnn_se', 24, [0, 1, 2, 3])
 ]
 
 run_list = []

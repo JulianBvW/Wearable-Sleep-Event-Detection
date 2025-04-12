@@ -84,16 +84,32 @@ Each preprocessing method brings the PPG signal down to 1Hz with multiple dimens
 
 \section{Model Architecture}
 
+The core of the detection model is an adapted version of the U-Net architecture, originally proposed for 2D image segmentation by Ronneberger et al. \cite{ronneberger2015u}. The U-Net architecture improves an encoder-decoder structure by adding skip connections between the corresponding encoder and decoder layers, which allows the model to learn both low-level and high-level features \todo{stolen formulation}. The adapted model uses 1D convolutions on the temporal dimension instead of 2D convolutions on the width and height of images. The output of the U-Net has the same resolution as the input, which allows the model to classify each second as either part of an event or of normal breathing. This inturn allows us or the user to analyse the prediction on a event level, instead of just the AHI level, which can be important, as studies showed links between apnea event duration and health that go beyond the AHI severity classifications \cite{butler2019apnea}.
+\todo{create a model figure. how detailed should it be? show the complete u-net?}
+\todo{channel sizes and temp resolution through the data flow}
+
+\subsection*{Attention mechanisms}
+
+Our model can leverage three types of attention:
+
 \begin{itemize}
-    \item U-Net (with PPG Conv-Block), Batch-Norm, Attention, ...
-    \item Output: Detection at 1Hz - Event vs No Event
-    \item TODO Next model then classifies into SDB classes
+    \item \textbf{Self-Attention in the bottleneck}: The self-attention mechanism, originally proposed by Vaswani et al. \cite{vaswani2017attention}, computes relevance vectors for each input feature through their query (Q) and key (K) matricies. By multiplicating this vector with the value matrix (V), the model learns long-range dependencies throughout the sequence, making it possible to focus on the important parts of the input data. The self-attention mechanism is computed as:
+    \begin{equation}
+        \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
+    \end{equation}
+    where $d_k$ is the dimension of the key matrix and the softmax function normalizes the attention scores, ensuring that they sum to 1.
+    Using Self-Attention can increase model complexity greatly due to their quadratic complexity, which is why we apply it in the bottleneck, where the temporal resolution is at its lowest.
+    \item \textbf{Attention gates}: Originally proposed for the task of medical pancreas image segmentation by Oktay et al. \cite{oktay2018attention}, attention gates are employed at the skip connections of the U-Net and help the model highlight important regions while suppressing irrelevant ones. They work by learning a gate that refines the skip connection (encoder) features before concatenation. This gate is computed from the same incomming skip connection features and the decoder features from the layer below. \todo{add the formula?}
+    \item \textbf{Squeeze-and-Excitation (SE) blocks}: The SE block, proposed by Hu et al. \cite{hu2018squeeze}, is a lightweight attention mechanism that computes channel-wise feature importance. It works in two parts: First, the squeeze operation creates feature maps accross the spatial dimensions using global average pooling, resulting in a 1D vector for each channel. Then, in the excitation part, two fully connected linear layers with ReLU activation transform this vector and multiply it with the input, effectively weighting the channels by importance. \todo{add the formula?}
 \end{itemize}
+
+\todo{talk about complexity impact? quadratic in time, quadratic in channels}
 
 \section{Training and Evaluation}
 
 \begin{itemize}
     \item Training Parameters (Optimizer, LR, BS, ...) and Setup (Machines, ...)
+    \item Sigmoid and threshold
     \item Seed and Cross-Validation (mainly balanced for AHI severity, but with seed 42 we got a good distribution fo demographic data in the folds)
     \item Train on 30min (?) segments. For Testing: Concat 30min Windows with Overlap for full night result.
     \item Correct results (like Olsen, 10sec minimum event and distance between events)

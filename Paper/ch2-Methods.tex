@@ -9,15 +9,60 @@ For the sleep event scoring, we used the automatic Somnolyzer system \todo{cite}
 
 As SDB events manifest differently accross sleep stages, we used a modified version of the hypnogram prediction model from Bakker et al. \cite{bakker2021estimating}, that used only PPG signals, ensuring that our model works doesn't depend on signals outside of the finger-worn PPG sensor setup. Comparing the predicted hypnogram\footnote{Bakker's model combined N1 and N2 stages into one, resulting in four stages: Wake, N1/N2, N3, and REM. For calculating the Kappa, Somnolyzer scorings were adjusted to the same format} with the Somnolyzer hypnogram, we achieved a Cohen's Kappa of 0.55, showing moderate agreement.
 
-Filtering the MESA participants for those with PPG and SpO2 data, Somnolyzer scorings, and available predicted hypnograms, we ended up with a dataset size of 1,880 participants. \todo{table ref} shows the demographic distribution of our dataset subset together with the generated folds. Similarly, \todo{table ref} shows the distribution of apnea event classes and the AHI severity classes, which are defined as follows: Normal (AHI < 5), Mild (5 <= AHI < 15), Moderate (15 <= AHI < 30), and Severe (AHI >= 30) \todo{make table}.
+Filtering the MESA participants for those with PPG and SpO2 data, Somnolyzer scorings, and available predicted hypnograms, we ended up with a dataset size of 1,880 participants. Table \ref{tab:dataset-demographics} shows the demographic distribution and sleep times of our dataset subset together with the generated folds.
+To assess SDB severity, the AHI is often categorized into four classes. These so called severity classes are defined as follows: Normal (AHI $<$ 5), Mild (5 $\le$ AHI $<$ 15), Moderate (15 $\le$ AHI $<$ 30), and Severe (AHI $\ge$ 30).
+Table \ref{tab:dataset-ahi} shows their distribution.
+The amount of different apnea classes is shown in table \ref{tab:dataset-apnea-classes}.
 
-\begin{itemize}
-    \item Explain MESA (what Patients, how did they record the nights, ...)
-    \item Statistical analysis (Count, Age, ...)
-    \item Scorings from SOMNOLYZER (OSA, HYP, ...)
-    \item Kappa between NSRR and SOMNOLYZER
-    \item Use predicted Hypnogram (maybe?) and their Kappa
-\end{itemize}
+\renewcommand{\arraystretch}{1.5}
+\begin{table}
+    \centering
+    \begin{tabular}{p{1cm} p{1cm} p{1.7cm} p{1.7cm} p{1.7cm} p{1.7cm}}
+        Fold & N & Age \newline (years) & BMI \newline ($kg/m^2$) & Sex \newline (N male) & TST \newline (h) \\
+        \hline
+        1 & 470 & $70\pm9$ \newline \textbf{[55, 90]} & $29\pm5$ \newline \textbf{[19, 48]} & 228 \newline (48.5\%) & $6.2\pm1.36$ \newline \textbf{[1.7, 10]} \\
+        2 & 470 & $70\pm9$ \newline \textbf{[54, 90]} & $29\pm6$ \newline \textbf{[17, 56]} & 208 \newline (44.3\%) & $6.2\pm1.36$ \newline \textbf{[1.6, 10]} \\
+        3 & 470 & $69\pm9$ \newline \textbf{[55, 90]} & $29\pm5$ \newline \textbf{[16, 50]} & 229 \newline (48.7\%) & $6.2\pm1.47$ \newline \textbf{[0.7, 10]} \\
+        4 & 470 & $69\pm9$ \newline \textbf{[55, 90]} & $28\pm5$ \newline \textbf{[17, 50]} & 210 \newline (44.7\%) & $6.2\pm1.32$ \newline \textbf{[0.9, 10]} \\
+        \hline
+        Full & 1880 & $69\pm9$ \newline \textbf{[54, 90]} & $29\pm6$ \newline \textbf{[16, 56]} & 875 \newline (46.5\%) & $6.2\pm1.38$ \newline \textbf{[0.7, 10]} \\
+    \end{tabular}
+    \caption{Demographic distribution and sleep times of the MESA dataset subset. Format for Age, BMI, and TST is mean $\pm$ std [min, max]. \label{tab:dataset-demographics}}
+\end{table}
+
+\renewcommand{\arraystretch}{1.5}
+\begin{table}
+    \centering
+    \begin{tabular}{p{1cm} p{2cm} p{1.5cm} p{1.5cm} p{1.5cm} p{1.5cm}}
+         &  & \multicolumn{4}{c}{Severity Class} \\
+        \cline{3-6}
+        Fold & AHI & normal & mild & moderate & severe \\
+        \hline
+        1 & $22.2\pm18.3$ \newline \textbf{[0.4, 100]} & 61 & 153 & 136 & 120 \\
+        2 & $22.0\pm18.3$ \newline \textbf{[0.3, 93]} & 61 & 151 & 134 & 124 \\
+        3 & $21.3\pm17.1$ \newline \textbf{[0.4, 95]} & 61 & 151 & 138 & 120 \\
+        4 & $22.0\pm18.3$ \newline \textbf{[0.4, 107]} & 61 & 150 & 140 & 119 \\
+        \hline
+        Full & $21.9\pm18.0$ \newline \textbf{[0.3, 107]} & 244 & 605 & 548 & 483 \\
+    \end{tabular}
+    \caption{AHI and severity class distribution accross folds and full dataset subset.\todo{better use [25\%,75\%] interval instead of [min, max]?} Format for the AHI is mean $\pm$ std [min, max]. \label{tab:dataset-ahi}}
+\end{table}
+
+\renewcommand{\arraystretch}{1.5}
+\begin{table}
+    \centering
+    \begin{tabular}{p{1cm} p{1.7cm} p{1.7cm} p{1.7cm} p{1.8cm}}
+        Fold & obstructive \newline apnea & central \newline apnea & mixed \newline apnea & hypopnea \\
+        \hline
+        1 & 15k (24\%) & 4k (7\%) & 1k (2\%) & 42k (67\%) \\
+        2 & 16k (26\%) & 4k (6\%) & 1k (2\%) & 42k (66\%) \\
+        3 & 15k (24\%) & 3k (6\%) & 1k (2\%) & 41k (67\%) \\
+        4 & 17k (26\%) & 4k (6\%) & 1k (2\%) & 42k (66\%) \\
+        \hline
+        Full & 63k (25\%) & 16k (6\%) & 5k (2\%) & 167k (67\%) \\
+    \end{tabular}
+    \caption{Total number of apnea events. \label{tab:dataset-apnea-classes}}
+\end{table}
 
 \section{Preprocessing}
 

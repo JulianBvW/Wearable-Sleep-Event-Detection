@@ -109,6 +109,9 @@ Our model can leverage three types of attention:
 
 \section{Training and Evaluation}
 
+To ensure statistical validity, we used a fixed seed of $42$ and a 4-fold cross-validation approach balanced for AHI severity class. In k-fold cross-validation, the dataset is split into k equal parts (called folds). One then selects one fold as the test set and train the model on the remaining k-1 folds. This process is repeated k times, each time with a different fold as the test set, and the results are averaged to obtain a more reliable estimate of the model's performance. This approach helps to mitigate the risk of overfitting and provides a more robust evaluation of the model's generalization ability.
+As seen in Tables \ref{tab:dataset-demographics}, \ref{tab:dataset-ahi}, and \ref{tab:dataset-apnea-classes}, the folds are not only balanced for AHI severity class, but also show a good distribution of demographic data.
+
 \begin{itemize}
     \item Training Parameters (Optimizer, LR, BS, ...) and Setup (Machines, ...)
     \item Sigmoid and threshold
@@ -118,5 +121,3 @@ Our model can leverage three types of attention:
     \item Event-based metrics (Se, Pr, F1) and when to count TP, TN, FP, FN
     \item AHI-based metric (Linear Correlation, Severity Classes, Near-Boundary Double-Classification)
 \end{itemize}
-
-% \subsection*{Subsection}

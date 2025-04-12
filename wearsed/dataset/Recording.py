@@ -40,7 +40,7 @@ class Recording():
 
     def get_ahi(self):  # Apnea Hypopnea Index
         assert self.events is not None, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'
-        return self.get_event_count(['HYP', 'OSA', 'CSA']) / (self.total_sleep_time_in_sec / 60 / 60)
+        return self.get_event_count(['HYP', 'OSA', 'CSA', 'MSA']) / (self.total_sleep_time_in_sec / 60 / 60)
 
     def get_ari(self):  # Arousal Index
         assert self.events is not None, 'Events aren\'t loaded as lists ; Initialize with `Recording(..., events_as_list=True)`'

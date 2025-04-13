@@ -45,6 +45,10 @@ class AttentionUNet(nn.Module):
         # Self-Attention layers
         if 'bottleneck' in self.use_attention:
             self.self_attn_bottleneck = SelfAttention(64)
+        
+        # Squeeze-and-Excitation Attention
+        if 'se' in self.use_attention:
+            self.se_attention = SE_Block()
 
         # Output
         self.out = nn.Conv1d(in_channels=8, out_channels=out_channels, kernel_size=1)
@@ -63,6 +67,10 @@ class AttentionUNet(nn.Module):
         pleth = self.fe_conv_3(self.fe_pool(pleth))    # [bs, 16,  16*600]
         pleth = self.fe_conv_4(self.fe_pool(pleth))    # [bs,  8,   4*600]
         pleth = self.fe_conv_5(self.fe_pool(pleth))    # [bs,  4,   1*600]
+
+        # PPG Attention
+        if 'se' in self.use_attention:
+            pleth = self.se_attention(pleth)           # [bs,  4, 600]
 
         # Concatinate
         return torch.cat([hyp, spo2, pleth], dim=1)    # [bs, 6, 600]
@@ -169,3 +177,21 @@ class SelfAttention(nn.Module):
         x = x.permute(0, 2, 1)     # nn.MultiheadAttention uses [bs, seq_len, channels]
         x, _ = self.attn(x, x, x)  # Use x three times for self-attention
         return x.permute(0, 2, 1)  # Convert back to [bs, channels, seq_length]
+
+
+class SE_Block(nn.Module):
+    def __init__(self, in_channels=4, bottleneck_channels=4):
+        super(SE_Block, self).__init__()
+        self.squeeze = nn.AdaptiveAvgPool1d(1)
+        self.excitation = nn.Sequential(
+            nn.Linear(in_channels, bottleneck_channels, bias=False),
+            nn.ReLU(inplace=True),
+            nn.Linear(bottleneck_channels, in_channels, bias=False),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        bs, in_ch, seq_len = x.shape               # [bs, 4, 600]
+        y = self.squeeze(x).view(bs, in_ch)        # [bs, 4]
+        y = self.excitation(y).view(bs, in_ch, 1)  # [bs, 4, 1]
+        return x * y                               # [bs, 4, 600]

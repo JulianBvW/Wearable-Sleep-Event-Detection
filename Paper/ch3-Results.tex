@@ -7,36 +7,48 @@
     \item \todo{don't show the kfold balancing analysis, right? table was enough} %https://github.com/JulianBvW/Wearable-Sleep-Event-Detection/blob/main/Notebooks/44_kfold_generator.ipynb
     \item \todo{should I show the correctify size analysis} %https://github.com/JulianBvW/Wearable-Sleep-Event-Detection/blob/main/Notebooks/55_analyse_correctify_size.ipynb
     \item \todo{Can I show the no hypno model results (no cross validation)} %https://github.com/JulianBvW/Wearable-Sleep-Event-Detection/blob/main/Notebooks/36_prec_rec_new_no_hypno.ipynb
+    \item \todo{Should Ishow the results of the runs with no improvements: Multiscale CNN (what about SE), Reduce LR}
 \end{itemize}
 
-Show simple (F1) results for:
-\begin{itemize}
-    \item Final model (with pred hypno and bottleneck,gates)
-    \item Final No SpO2
-    \item Oracle model (with gt hypno and bottleneck,gates)
-    \item Pleth Pre (as train time was 3x faster)
-    \item No improvements: Multiscale CNN (what about SE), Reduce LR
-\end{itemize}
-
-Show detailed (AHI, Sev Classes, ICC, ...) results for:
-\begin{itemize}
-    \item Final model (with pred hypno and bottleneck,gates)
-    \item Final No SpO2
-\end{itemize}
-
-Detailed analysis for final model with:
-\begin{itemize}
-    \item Per Event Classes
-    \item Per Sleep Stage
-    \item Event lengths
-\end{itemize}
 
 \section{PPG Preprocessing through the VAE}
 
+One of the preprocessing techniques used to "downsample" the PPG signal was the Variational Autoencoder (VAE), whose encoder could be used to transform each 256Hz second into a 1Hz value of 8 dimensions. Figure \todo{ref} show the example reconstructions of the four model variations we tried. \textit{linVAE} and \textit{convVAE} refere to the type of the layers in the model, being either linear or convolutional respectively. \textit{1s} and \textit{5s} refer to the input length. While the \textit{1s} model would reconstruct the inputted second, the \textit{5s} model would reconstruct only the middle one second of the 5 second window around it. Figure \todo{ref} plots the reconstruction loss over the epochs and shows that the convolutional model with the 5-second window performed best and was therefore used in the next experiments. \todo{linVAE 5s was obviously stuck in a local minima and could not converge during training, should I still show it? Also the linVae 1s has only been trained for 10 epochs instead of 50. Should I run it again?}
+
 \section{Preprocessing impact on performance}
 
-\section{SDB Detection Model}
+Figure \todo{ref} shows the recall, precision, and F1-score \todo{do I have the exact training time?} for the SDB detection model with the different preprocessing techniques. While neither the statistical nor the VAE preprocessing approach reached the same performance as the in-model approach, using both statistical and VAE preprocessing together did reach a similar performance. As both these values would only be needed to be calculated once before the training and not during each epoch, which the in-model approach did, training time got reduced significantly by a factor of 3.
+
+\section{SDB Detection Model \todo{put this section before preprocessing?}}
+
+\subsection*{Event-level performance}
+
+Figure \todo{ref} shows the recall, precision, and F1-score over each threshold for the main SDB detection model, which uses the PPG-predicted hypnogram, the PPG itself with the in-model technique, and the SpO2. The Figure also shows a version of the model without the SpO2 signal, which means it relies solely on the PPG data. As can be seen, omitting the SpO2 signal has a significant impact on the performance, as the peak F1-score drops from \todo{exact values}.
+
+Test and training losses together with the peak F1-score over the epochs are displayed in Figure \todo{ref}. While the version without SpO2 seems to train slightly more stable, learning convergences much slower than the one with SpO2, which reaches the area of the final peak F1-score in the first few epochs.
+
+The threshold for the best performance was determined to be \todo{exact value} and the final event-level metrics are shown in Table \todo{ref}.
+
+\todo{\begin{itemize}
+    \item Evaluation per Event Classes
+    \item Evaluation per Sleep Stage
+    \item Event lengths
+\end{itemize}}
+
+\subsection*{AHI-level performance}
+
+Figure \todo{ref} shows the scatter plots for the predicted and true AHI values of both versions of the model \todo{address the bias towards predicting lower AHIs}. To assess agreement, Figure \todo{ref} displays the corresponding Bland-Altman plots. We found a \todo{highlight the interesting metrics, like level of agreement, ICC, Spearman's rank, ...}. All AHI-level metrics can be found in Table \todo{ref}.
+
+\subsection*{Severity-class-level performance}
+
+Figure \todo{ref} shows the confusion matrices for the predicted severity classes using the hard thresholds and the NBL version. Although a strong focus on the true prediction diagonal can be seen, the bias towards predicting lower severity classes is also visible like in the AHI-level results.
+
+We shows the models discrimination ability in Table \todo{ref}. \todo{which values to highlight?}
 
 \section{Importance of correct Sleep Stages}
 
+\todo{figure .. shows metrics of predHypno model compared to GTHypno and maybe NoHypno. Performance decreases significantly}
+
 \section{Correcting model output}
+
+After applying the threshold for the prediction, a correctification step was applied. This step removed events shorter than a specified number of seconds (called the correctification size) and merged events that were closer than the correctification size. Figure \todo{ref, F1-heatmap and prec-recall plots by corr size} displays the impact of the correctification size and shows that settings this value too low allows more prediction errors to pass through, while setting it too high removes many true positives.

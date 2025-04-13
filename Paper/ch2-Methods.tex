@@ -109,15 +109,67 @@ Our model can leverage three types of attention:
 
 \section{Training and Evaluation}
 
+\subsection*{Cross-Validation}
+
 To ensure statistical validity, we used a fixed seed of $42$ and a 4-fold cross-validation approach balanced for AHI severity class. In k-fold cross-validation, the dataset is split into k equal parts (called folds). One then selects one fold as the test set and train the model on the remaining k-1 folds. This process is repeated k times, each time with a different fold as the test set, and the results are averaged to obtain a more reliable estimate of the model's performance. This approach helps to mitigate the risk of overfitting and provides a more robust evaluation of the model's generalization ability.
 As seen in Tables \ref{tab:dataset-demographics}, \ref{tab:dataset-ahi}, and \ref{tab:dataset-apnea-classes}, the folds are not only balanced for AHI severity class, but also show a good distribution of demographic data.
 
+\subsection*{Training Parameters and Setup}
+
+The training targets are one-dimensional vectors with the same length as the input sequence, where each second is labeled as either 0, indicating normal breathing, or 1, indicating an apnea event. The final layer of the model is a sigmoid activation function, that maps each second to an event probability value between 0 and 1. During training, we optimize the binary cross-entropy loss\footnote{specifically, we use PyTorch's \todo{do I need to cite?} \texttt{nn.BCEWithLogitsLoss()}, which combines the sigmoid activation and BCE loss into one class, as it is more stable than doing these operation in sequence.} (BCE) between the predicted probabilities and the true labels. The BCE loss is defined as:
+\todo{formula}
+The loss is then averaged over each batch and parsed to the optimizer, in our case the Adam optimizer with a learning rate of 0.001 \todo{explain Adam maybe?}.
+
+As for batching, we used randomly selected 32 30-minute segments from four different recordings each to mitigate batch overfitting on sleep patterns of a single participant \todo{table with memory usage}.
+
+During testing, we used a sliding window apprach, were each recording was split into 30-minute segments with a 2-minute overlap \todo{grpahic explaining this}. Model predictions were then concatinated, disregarding each first and last minute to create the final prediction for the whole night. This approach allows us to predict recordings of arbitrary length, on which metrics like the AHI can be calculated.
+
+Each fold has been trained on a single NVIDIA A40 GPU with 48GB VRAM with a time limit of 2 days for 30 epochs.
+
+\subsection*{Evaluation Metrics}
+
+Several metrics are employed to measure the perfomance of the model, that can be divided into three categories:
+
+\subsubsection*{A. Event-level metrics}
+
+To assess the model perfomance on an event level, regardless of the length of the night, we use the event-level metrics. They are calculated by extracting events from the predicted probabilities by thresholding the probabilities and counting each consecutive sequences of 1s as a single event. To mitigate outliers, we disregarded events shorter than 3 seconds and combined consecutive events that are less than 3 seconds apart into one event \todo{is this correct for the final results?}.
+
+Olsen et al. \cite{olsen2020robust} defined scoring rules on the event-level that are defined as follows: A predicted event, that overlaps with a true event, gets classified as a true positive (TP). If a predicted event has no overlapping true event, it gets counted as a false positive (FP). If a true event doesn't overlap with any predicted event, it gets counted as a false negative (FN). Note that there are no true positives (TP) on the event-level. In this work, we use a more strict version of their rules, that were adjusted by Xie et al. \cite{xie2023use}, and in which each event can only be used for scoring one time. Meaning that if a predicted event overlaps with multiple true events, only one true event gets counted as TP, while the others are counted as FN. The same applies the other way around, where a true event can only be counted as TP once and other overlapping predicted events are counted as FP. A visual example can be seen Figure \todo{Add figure from Jiali paper}. From this, we can now compute the following metrics:
+
+\renewcommand{\arraystretch}{1.5}
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{p{1.6cm} p{2cm} p{4.4cm}}
+        Metric & Calculation & Meaning \\
+        \hline
+        Recall \newline (Rec) & $\frac{TP}{TP+FN}$ & What \% of real events \newline got detected? \\
+        Precision \newline (Pr) & $\frac{TP}{TP+FP}$ & What \% of predicted events \newline where real events? \\
+        F1-score & $2 * \frac{Pr * Re}{Pr + Re}$ & Harmonic mean of \newline Precision and Recall \\
+    \end{tabular}
+\end{table}
+
+As these metrics depend on the selection for a proper threshold, we \todo{we or we'll?} show these metrics as a function of the threshold \todo{also AUC under F1-curve?? unusual as normally AUC for TPR and FPR which uses TN}.
+
+\subsubsection*{B. AHI-level metrics}
+
+Dividing the total number of apnea events by the TST (in hours) gives us the most common metric for SDB severity, the AHI. We compare the predicted AHI ($AHI_{pred}$) and the Somnolyzer AHI ($AHI_{true}$) using the following metrics:
+
 \begin{itemize}
-    \item Training Parameters (Optimizer, LR, BS, ...) and Setup (Machines, ...)
-    \item Sigmoid and threshold
-    \item Seed and Cross-Validation (mainly balanced for AHI severity, but with seed 42 we got a good distribution fo demographic data in the folds)
-    \item Train on 30min (?) segments. For Testing: Concat 30min Windows with Overlap for full night result.
-    \item Correct results (like Olsen, 10sec minimum event and distance between events)
-    \item Event-based metrics (Se, Pr, F1) and when to count TP, TN, FP, FN
-    \item AHI-based metric (Linear Correlation, Severity Classes, Near-Boundary Double-Classification)
+    \item Plotting $AHI_{pred}$ against $AHI_{true}$ shows their correlation which can also be expressed in the \textbf{Root Mean Square Error} (RMSE) and the \todo{\textbf{$R^2$}, what is up with Olsens Paper? mx+b}. RMSE is calculated as:
+    \begin{equation}
+        RMSE = \sqrt{\frac{1}{n}\sum_{i=1}^{n}(AHI_{pred} - AHI_{true})^2} 
+    \end{equation}
+    where n is the number of samples (or AHIs in our case).
+    \item The \textbf{Bland-Altman plot} is another way to visualize agreement by plotting the difference between the two AHI values against their mean \todo{should I cite these?}. This allows us to see the bias, defined as the mean difference, and limits of agreement, defined as the bias $\pm$ 1.96 times the standard deviation of the differences. The limits of agreement are the range in which 95\% of the differences between the two AHI values are expected to fall.
+    \item The \textbf{Spearman's rank correlation coefficient} ($\rho$) ignores the actual values of the AHIs and onlly looks at their ranks. This is useful for measuring the strength of the monotonic relationship between the two AHI values, regardless of their actual values \todo{formula?}. The coefficient ranges from -1 to 1, where -1 indicates a perfect negative correlation, 0 indicates no correlation, and 1 indicates a perfect positive correlation.
+    \item Finally, we also calculated the \textbf{Intraclass Correlation Coefficient} (ICC) \todo{what is it? which one do we use? how is it computed maybe?}
 \end{itemize}
+
+\subsubsection*{C. Severity-class-level metrics}
+
+The last set of metrics we used is the severity-class-level metrics, which are calculated on the AHI severity classes. As mentioned, the boundaries for the severity classes are defined as follows: Normal (AHI $<$ 5), Mild (5 $\le$ AHI $<$ 15), Moderate (15 $\le$ AHI $<$ 30), and Severe (AHI $\ge$ 30). As small errors in the AHI around these hard thresholds can lead to a wrong classification, we used near-boundary double-labeling (NBL), which allows us to assign two classes for AHIs that fall in the range of about 2.5 around the boundaries. Exact values can be found in \todo{appendix}.
+
+Using these four classes we can plot the confusion matrix and compute model \textbf{Accuray} (Acc), defined as the number of correctly classified patients divided by the total number of patients, and the \textbf{Cohen's Kappa} ($\kappa$) \todo{what is it? how is it computed?}.
+
+Finally, this matrix can be binarized to assess the discrimination ability between normal to abnormal (mild-severe), mild to moderate, and moderate to severe SDB. \todo{should I create a table explaining all (Acc, Sen, Spe, PPV, NPV, LR+, LR-) metrics again or is LR enough?}
+

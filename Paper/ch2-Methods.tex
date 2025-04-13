@@ -172,4 +172,9 @@ The last set of metrics we used is the severity-class-level metrics, which are c
 Using these four classes we can plot the confusion matrix and compute model \textbf{Accuray} (Acc), defined as the number of correctly classified patients divided by the total number of patients, and the \textbf{Cohen's Kappa} ($\kappa$) \todo{what is it? how is it computed?}.
 
 Finally, this matrix can be binarized to assess the discrimination ability between normal to abnormal (mild-severe), mild to moderate, and moderate to severe SDB. \todo{should I create a table explaining all (Acc, Sen, Spe, PPV, NPV, LR+, LR-) metrics again or is LR enough?}
+Metrics on this binarized view include the \textbf{Likelihood ratios} (LR), which give insight in how much a test result changes the odds of having the disease, or in our case, the specific severity classes. These likelihoods can be computed as positive and negative likelihood ratios (LR+ and LR-), which are defined as:
 
+\begin{align}
+    LR+ &= \frac{Sensitivity}{1-Specificity} \\
+    LR- &= \frac{1-Sensitivity}{Specificity} 
+\end{align}

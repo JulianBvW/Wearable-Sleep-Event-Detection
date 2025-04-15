@@ -4,13 +4,14 @@ from tqdm import tqdm
 import pandas as pd
 
 runs = [
-    ('final_default', 28, [0, 1, 2, 3]),
-    ('final_no_spo2', 28, [0, 1, 2, 3]),
-    ('final_reduce_lr', 28, [0, 1, 2, 3]),
-    ('final_plethpre', 28, [2, 3]),
-    ('final_plethpre_se', 28, [0, 1, 2, 3]),
-    ('final_mulstiscale_cnn', 28, [0, 1, 2, 3]),
-    ('final_mulstiscale_cnn_se', 24, [0, 1, 2, 3])
+    # ('final_default', 28, [0, 1, 2, 3]),
+    # ('final_no_spo2', 28, [0, 1, 2, 3]),
+    # ('final_reduce_lr', 28, [0, 1, 2, 3]),
+    # ('final_plethpre', 28, [2, 3]),
+    # ('final_plethpre_se', 28, [0, 1, 2, 3]),
+    # ('final_mulstiscale_cnn', 28, [0, 1, 2, 3]),
+    # ('final_mulstiscale_cnn_se', 24, [0, 1, 2, 3]),
+    ('final_default_se', 24, [0, 1, 2])
 ]
 
 run_list = []
@@ -46,4 +47,4 @@ df = pd.DataFrame({
     'recall': rec_list
 })
 df['f1'] = (2 * df['precision'] * df['recall']) / (df['precision'] + df['recall'])
-df.to_csv('Notebooks/58_final_results.csv', index=False)
+df.to_csv('Notebooks/58_final_results1.csv', index=False)

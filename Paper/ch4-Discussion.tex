@@ -1,7 +1,28 @@
 \chapter{Discussion \label{Chapter-Discussion}}
 
-\begin{itemize}
-    \item Discussion and Implications (Is this way applicable in the real world)
-    \item Limitations
-    \item Further work
-\end{itemize}
+% Discussions
+
+In this work, we presented a, automatic, data-driven SDB detection model based on an Attention U-Net with state-of-the-art performance, that can tackle the problem of the huge number of undiagnosed sleep apnea cases, due to its selection of uncomplicated and inobtrusive input sensors. We achieved a peak F1-score of 76.6\% in event detection and an AHI prediction correlation of ???, which could be even further improved through the use of linear of MLP-based corrections. We showed great diagnostic results with positive and negative likelihood ratios of $\ge 16$ and $\le 0.28$ respectively with very few participants being wrongly classified more than one severity class apart. All metrics were based on our strict event scoring that is more transparent than minute-to-minute, segment classification.
+
+Our model demonstrated higher detection rates for apnea events compared to hypopnea events. This result, while counterintuitive given the event distribution in the dataset, is expected because hypopneas are harder to detect due to their lower impact and not always being associated with desaturation events.
+
+One goal of our work was to use only PPG and SpO2, as the finger-worn sensor recording these signals, is easy to set up and unobtrusive during sleep. However, an even less obtrusive option are smart watches or smart rings, that already today can record PPG at good quality. To our knowlegde, SpO2 cannot be realiably be recorded using these devices, especially not the subtle drops in saturation on which some classification is based on. 
+We showed that omitting SpO2 data from the training signals decreased performance, but not as much as expected. The model was still able to detect SDB events with a peak F1-score of \todo{X\%} and predict AHI with a correlation of \todo{X}. This means that our model is still usefull on these unobtrusive technologies that only measure PPG, and can be used over many nights. This greatly helps with diagnositic meaningfulness, screening, analyzing night-to-night variability, and evaluating effectiveness of SDB treatment methods.
+Also, \todo{appendix XY} showed that training without SpO2 data was, while plateauing way slower, more stable than than training with it, which is likely due to the fact that SpO2 in itself is less stable and prone to artifacts. 
+
+Another important factor of our models performance is the use of sleep stage labels. The model performed best when using ground truth sleep stages from Somnolyzer and worst without any sleep stage information. The PPG-derived sleep stages from \cite{bakker2021estimating} greatly improved results over using no sleep stage information but were still not as good as using the ground truth. Further improvements in predicting the hypnogram from only PPG signals could lead to better results in detecting SDB, that are still relying solely on data from PPG sensors.
+
+We also looked into preprocessing the PPG signal using statistical analysis and a VAE. While achieving the same level of perfomance as using the in-model approach, training time of the detection model decreased significantly. Inference time will not be affected, as the benefit comes only from not needing to recompute the preprocessed signal for each training run, but this approach could help with rapid prototyping and hyperparameter tuning.
+
+Finally, correcting the models output by filtering out events shorter than 3 seconds and merging events less than 3 seconds apart into one, we saw an increase in event-level results, while general AHI-level performance decreased slightly. Looking at the positive and negative diagnostic performance, we see that correcting the output improves results on high AHI participants while slightly lowering results on low AHI participants. This explains lower general AHI-level performance, as the dataset is slightly biased towards low AHIs.
+
+% Limitations
+
+An important limitation of our work is the lack of validation on other datasets. While the MESA dataset we used is large and greatly balanced in some regards, like AHI, BMI, smoking habits, or co-morbidities, other factors like age are not balanced. Recordings have also been made in a clinical setting and with the same hardware. Even further, first-night effects haven't been adressed.
+Validation our work on other datasets, is crucial to show generalizability and usefulness of our model in the real world.
+
+% Future work
+
+Future work could tackle the bias and errors in AHI prediction. While a linear correctioin could help correcting the bias, other studies have shown that using demographic data to refine the AHI through a small MLP can increase correlation greatly.
+
+As the use of smart watches or smart rings maximizes or goal of inobtrusive SDB detection even further, future work could also look into using other sensors that are already available on these devices. One example is the accelerometer, which records movements during sleep, or breathing sounds, that are mainly used for detecting snoring. Both signals are indicators of SDB events and might improve our results even further.

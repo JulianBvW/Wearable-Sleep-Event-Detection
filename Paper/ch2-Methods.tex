@@ -111,7 +111,7 @@ Our model can leverage three types of attention:
 
 \subsection*{Cross-Validation}
 
-To ensure statistical validity, we used a fixed seed of $42$ and a 4-fold cross-validation approach balanced for AHI severity class. In k-fold cross-validation, the dataset is split into k equal parts (called folds). One then selects one fold as the test set and trains the model on the remaining k-1 folds. This process is repeated k times, each time with a different fold as the test set, and the results are averaged to obtain a more reliable estimate of the model's performance. This approach helps to mitigate the risk of overfitting and provides a more robust evaluation of the model's generalization ability.
+To ensure statistical validity, we used a fixed seed of $42$ and a 4-fold cross-validation approach balanced for AHI severity class. In k-fold cross-validation, the dataset is split into k equal parts (called folds). One then selects one fold as the test set and trains the model on the remaining k-1 folds. This process is repeated k times, each time with a different fold as the test set, and the results are averaged to obtain a more reliable estimate of the model's performance\todo{example figure}. This approach helps to mitigate the risk of overfitting and provides a more robust evaluation of the model's generalization ability.
 As seen in Tables \ref{tab:dataset-demographics}, \ref{tab:dataset-ahi}, and \ref{tab:dataset-apnea-classes}, the folds are not only balanced for AHI severity class, but also show a good distribution of demographic data.
 
 \subsection*{Training Parameters and Setup}
@@ -161,7 +161,7 @@ Dividing the total number of apnea events by the TST (in hours) gives us the mos
     \end{equation}
     where n is the number of samples (or participants AHIs in our case).
     \item The \textbf{Bland-Altman plot} is another way to visualize agreement by plotting the difference between the two AHI values against their mean \todo{should I cite these?}. This allows us to see the bias, defined as the mean difference, and limits of agreement, defined as the bias $\pm$ 1.96 times the standard deviation of the differences. The limits of agreement are the range in which 95\% of the differences between the two AHI values are expected to fall.
-    \item The \textbf{Spearman's rank correlation coefficient} ($\rho$) ignores the actual values of the AHIs and onlly looks at their ranks. This is useful for measuring the strength of the monotonic relationship between the two AHI values, regardless of their actual values \todo{formula?}. The coefficient ranges from -1 to 1, where -1 indicates a perfect negative correlation, 0 indicates no correlation, and 1 indicates a perfect positive correlation.
+    \item The \textbf{Spearman's rank correlation coefficient} ($\rho$) ignores the actual values of the AHIs and only looks at their ranks. This is useful for measuring the strength of the monotonic relationship between the two AHI values, regardless of their actual values \todo{formula?}. The coefficient ranges from -1 to 1, where -1 indicates a perfect negative correlation, 0 indicates no correlation, and 1 indicates a perfect positive correlation.
     \item Finally, we also calculated the \textbf{Intraclass Correlation Coefficient} (ICC) \todo{what is it? which one do we use? how is it computed maybe?}
 \end{itemize}
 

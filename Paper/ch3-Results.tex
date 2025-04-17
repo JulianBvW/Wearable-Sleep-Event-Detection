@@ -1,41 +1,106 @@
 \chapter{Results \label{Chapter-Results}}
 
-\begin{itemize}
-    \item \todo{should I show the loss and reconstruction of the VAE?} %https://github.com/JulianBvW/Wearable-Sleep-Event-Detection/blob/main/Notebooks/31_pleth_vae_recon.ipynb
-    \item \todo {should I show an example of the models output} %https://github.com/JulianBvW/Wearable-Sleep-Event-Detection/blob/main/Notebooks/32_look_at_outputs.ipynb
-    \item \todo{should I talk about the denoising techniques? should I show an example of them? Or just the one I used (lowpass)? Results are without cross validation} %https://github.com/JulianBvW/Wearable-Sleep-Event-Detection/blob/main/Notebooks/38_frequency_filters.ipynb
-    \item \todo{don't show the kfold balancing analysis, right? table was enough} %https://github.com/JulianBvW/Wearable-Sleep-Event-Detection/blob/main/Notebooks/44_kfold_generator.ipynb
-    \item \todo{should I show the correctify size analysis} %https://github.com/JulianBvW/Wearable-Sleep-Event-Detection/blob/main/Notebooks/55_analyse_correctify_size.ipynb
-    \item \todo{Can I show the no hypno model results (no cross validation)} %https://github.com/JulianBvW/Wearable-Sleep-Event-Detection/blob/main/Notebooks/36_prec_rec_new_no_hypno.ipynb
-    \item \todo{Should Ishow the results of the runs with no improvements: Multiscale CNN (what about SE), Reduce LR}
-\end{itemize}
-
-
 \section{PPG Preprocessing through the VAE}
 
-One of the preprocessing techniques used to "downsample" the PPG signal was the Variational Autoencoder (VAE), whose encoder could be used to transform each 256Hz second into a 1Hz value of 8 dimensions. Figure \todo{ref} show the example reconstructions of the four model variations we tried. \textit{linVAE} and \textit{convVAE} refere to the type of the layers in the model, being either linear or convolutional respectively. \textit{1s} and \textit{5s} refer to the input length. While the \textit{1s} model would reconstruct the inputted second, the \textit{5s} model would reconstruct only the middle one second of the 5 second window around it. Figure \todo{ref} plots the reconstruction loss over the epochs and shows that the convolutional model with the 5-second window performed best and was therefore used in the next experiments. \todo{linVAE 5s was obviously stuck in a local minima and could not converge during training, should I still show it? Also the linVae 1s has only been trained for 10 epochs instead of 50. Should I run it again?}
+One of the preprocessing techniques used to "downsample" the PPG signal was the Variational Autoencoder (VAE), whose encoder could be used to transform each 256Hz second into a 1Hz value of 8 dimensions. We tried two versions: The first got a 1-second input and had to reconstruct the exact second. The other one go a 2-second window around the second it should reconstruct. Figure \ref{fig:vaereconstruction} shows the example reconstructions of the two variations and Figure \ref{fig:vaeloss} plots the reconstruction losses over the epochs. As the 5s VAE had a lower loss, we used its encoder for the VAE preprocessing option.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{images/VaeReconstruction}
+    \caption{Example difference in reconstructions of the 1s and 5s VAE for the same signal. Each second has 256 values, which are reduced to only 8 values.}
+    \label{fig:vaereconstruction}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{images/VaeLoss}
+    \caption{Train and test loss of both VAEs. Although the 1s VAE had a lower train loss, the 5s performed better on the test set, which could be a sign of better generalization.}
+    \label{fig:vaeloss}
+\end{figure}
 
 \section{Preprocessing impact on performance}
 
-Figure \todo{ref} shows the recall, precision, and F1-score \todo{do I have the exact training time?} for the SDB detection model with the different preprocessing techniques. While neither the statistical nor the VAE preprocessing approach reached the same performance as the in-model approach, using both statistical and VAE preprocessing together did reach a similar performance. As both these values would only be needed to be calculated once before the training and not during each epoch, which the in-model approach did, training time got reduced significantly by a factor of 3.
+Figure \ref{fig:preprocessingresults} shows the recall, precision, and F1-score for the SDB detection model with the different preprocessing techniques. While neither the statistical nor the VAE preprocessing approach reached the same performance as the in-model approach, using both statistical and VAE preprocessing together did reach a similar performance. As both these values would only be needed to be calculated once before the training and not during each epoch, which the in-model approach did, training time got reduced significantly by a factor of 3. This can be seen in Table \ref{tab:preprocessing-times}.
 
-\section{SDB Detection Model \todo{put this section before preprocessing?}}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.6\textwidth]{images/PreprocessingResults}
+    \caption{Precision, recall, and F1-score of the SDB detection model with different preprocessing techniques. Although the precision didn't change much, the recall and therefore the F1-score dropped significantly, when using the statistical or VAE preprocessing only.
+    Important to note is that these results came from experiments with the ground-truth hypnogram, which is not the final model, as the final model uses the PPG-predicted hypnogram.}
+    \label{fig:preprocessingresults}
+\end{figure}
+
+\renewcommand{\arraystretch}{1.5}
+\begin{table}
+    \centering
+    \begin{tabular}{ l c c }
+        Method & Training time & Testing time \\
+        \hline
+        In-model & 145min & 34min \\
+        Statistical & 46min & 12min \\
+        VAE & 47min & 12min \\
+        Stat. + VAE & 50min & 12min \\
+    \end{tabular}
+    \caption{SDB detection model training and testing times in minutes. The in-model approach took roughly three times as long. \label{tab:preprocessing-times}}
+\end{table}
+
+\section{SDB Detection Model}
 
 \subsection*{Event-level performance}
 
-Figure \todo{ref} shows the recall, precision, and F1-score over each threshold for the main SDB detection model, which uses the PPG-predicted hypnogram, the PPG itself with the in-model technique, and the SpO2. The Figure also shows a version of the model without the SpO2 signal, which means it relies solely on the PPG data. As can be seen, omitting the SpO2 signal has a significant impact on the performance, as the peak F1-score drops from \todo{exact values}.
+Figure \ref{fig:event-metrics} shows the recall, precision, and F1-score over each threshold for the main SDB detection model, which uses the PPG-predicted hypnogram, the PPG itself with the in-model technique, and the SpO2. The Figure also shows a version of the model without the SpO2 signal, which means it relies solely on the PPG data. As can be seen, omitting the SpO2 signal has a significant impact on the performance, as the peak F1-score drops from 69.7\% to 61.6\%.
 
-Test and training losses together with the peak F1-score over the epochs are displayed in Figure \todo{ref}. While the version without SpO2 seems to train slightly more stable, learning convergences much slower than the one with SpO2, which reaches the area of the final peak F1-score in the first few epochs.
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{images/DetectionModelEventMetrics}
+    \caption{Comparison of the event-level metrics of the SDB detection model with and without SpO2. The model with SpO2 reached a peak F1-score of 69.7\% at a threshold of 0.25, while the one without SpO2 only reached a peak F1-score of 61.6\% at a threshold of 0.35.}
+    \label{fig:event-metrics}
+\end{figure}
 
-The threshold for the best performance was determined to be \todo{exact value} and the final event-level metrics are shown in Table \todo{ref}.
+Test and training losses together with the peak F1-score over the epochs are displayed in Figure \ref{fig:event-epoch-losses}. While the version without SpO2 seems to train slightly more stable, learning convergences much slower than the one with SpO2, which reaches the area of the final peak F1-score in the first few epochs.
 
-\todo{\begin{itemize}
-    \item Evaluation per Event Classes
-    \item Evaluation per Sleep Stage
-    \item Event lengths
-\end{itemize}}
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{images/DetectionModelEpochLosses}
+    \caption{Losses and peak F1-score by epoch for every fold.}
+    \label{fig:event-epoch-losses}
+\end{figure}
 
-\subsection*{AHI-level performance}
+The threshold for the best performance was determined to be 0.25 and the final event-level metrics are shown in Table \ref{tab:final-metrics}.
+
+\renewcommand{\arraystretch}{1.5}
+\begin{table}
+    \centering
+    \begin{tabular}{ l c }
+        Metric & Score \\
+        \hline
+        Precision & 70.94\% \\
+        Recall    & 68.46\% \\
+        F1-Score  & 69.68\% \\
+    \end{tabular}
+    \caption{Final metrics for the SDB detection model trained on the PPG-predicted hypnogram, the SpO2 signal, and the in-model processed PPG at a classification threshold of 0.25. \label{tab:final-metrics}}
+\end{table}
+
+With this threshold, we can analyse the performance based on the event class and sleep stage. Table \ref{tab:event-class-distribution} shows the distribution of event classes in the dataset and the models detection rate. The dataset is highly imbalanced, with 2/3 of all events being hypopneas. Still, the model was best in detecting mixed apneas, with a near 90\% detection rate, while hypopneas were only detected about 2/3 of the time.
+
+\renewcommand{\arraystretch}{1.5}
+\begin{table}
+    \centering
+    \begin{tabular}{ l p{2cm} p{2cm} p{2cm} p{2cm} }
+        & Obstructive \newline Apnea & Mixed \newline Apnea & Central \newline Apnea & Hypopnea \\
+        \hline
+        Total (N) & 61161 & 4811 & 15240 & 162536 \\
+        \% of all & 25.1\% & 2.0\% & 6.3\%  &  66.7\% \\
+        \hline
+        Found (N) & 43243 & 4299 & 12486 & 111826 \\
+        \% found & 70.7\% & 89.4\% & 81.9\% & 68.8\% \\
+    \end{tabular}
+    \caption{Distribution of event classes in the full dataset and how many of the different classes were detected by our model. Although the dataset is greatly inbalanced to hypopneas (2/3 of all) and against mixed apneas (only 2\%), the detection rates greater for apneas than for hypopneas. \label{tab:event-class-distribution}}
+\end{table}
+
+In appendix \todo{ref} we show and discuss the results per sleep stage and the length of the predicted events.
+
+\subsection*{AHI-level performance \todo{both this and the next section need to be reworked after the new AHI calculation}}
 
 Figure \todo{ref} shows the scatter plots for the predicted and true AHI values of both versions of the model \todo{address the bias towards predicting lower AHIs}. To assess agreement, Figure \todo{ref} displays the corresponding Bland-Altman plots. We found a \todo{highlight the interesting metrics, like level of agreement, ICC, Spearman's rank, ...}. All AHI-level metrics can be found in Table \todo{ref}.
 
@@ -47,8 +112,22 @@ We shows the models discrimination ability in Table \todo{ref}. \todo{which valu
 
 \section{Importance of correct Sleep Stages}
 
-\todo{figure .. shows metrics of predHypno model compared to GTHypno and maybe NoHypno. Performance decreases significantly}
+To assess the importance of the correct sleep stage prediction, we trained a model with the ground-truth hypnogram, the PPG-generated hypnogram, and finally without any sleep stage information, letting the model only rely on PPG and SpO2. Figure \ref{fig:sleep-stage-importance} shows the event-level metrics for each of these experiments. With the exception of the recall for lower thresholds, the models performance reduces consistently, the less certain it is on sleep stages. Peak F1-score for the model without a hypnogram was only 56.9\%, a 13\% drop from the version with the PPG-predicted hypnogram and a 20\% drop from the model that has access to the ground-truth sleep stages, which got up to 76.1\%.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{images/SleepStages}
+    \caption{Precision, recall, and F1-score for the SDB detection model with different sleep stage information. The more the models sleep stage information gets to the ground-truth hypnogram, the better the performance.}
+    \label{fig:sleep-stage-importance}
+\end{figure}
 
 \section{Correcting model output}
 
-After applying the threshold for the prediction, a correctification step was applied. This step removed events shorter than a specified number of seconds (called the correctification size) and merged events that were closer than the correctification size. Figure \todo{ref, F1-heatmap and prec-recall plots by corr size} displays the impact of the correctification size and shows that settings this value too low allows more prediction errors to pass through, while setting it too high removes many true positives.
+After applying the threshold for the prediction, a correction step was applied. This step removed events shorter than a specified number of seconds (called the correction size) and merged events that were closer than the correctification size. Figure \ref{fig:correction-size} displays the impact of the correctification size and shows that settings this value too low allows more prediction errors to pass through, while setting it too high removes many true positives. A correction size of 3 seconds seems to be the best option.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{images/CorSizeMetrics}
+    \caption{Event-level metrics for our SDB detection model for different correction sizes over the thresholds. As the precision grows with bigger correction sizes, the recall decreases. While most of both changes are somewhat evenly, there is a big difference in no correction (size of 1) to a small correction (of size 2) for the precision. Important to note is that, as with the preprocessing experiments, these results came from tests with the ground-truth hypnogram.}
+    \label{fig:correction-size}
+\end{figure}

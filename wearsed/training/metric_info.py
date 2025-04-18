@@ -86,3 +86,22 @@ def combine_fold_results(run, folds, epoch, drop_sep=True):
     y_pred, y_true = output['predictions'], output['targets']
     hypnogram_data, class_data = output['hypnogram_data'], output['class_data']
     return y_pred, y_true, hypnogram_data, class_data
+
+def get_ahis(y_pred, y_true, hypnogram_data, class_data, thr, correctify=False, correctify_size=10):
+    ahis_pred, ahis_true = [], []
+    recording_stops = list(y_true[y_true == -999].index)
+    for start, end in zip([0] + recording_stops, recording_stops):
+        ahi_pred, ahi_true = get_ahis_single_recording(y_pred[start+1:end], y_true[start+1:end], hypnogram_data[start+1:end], class_data[start+1:end], thr, correctify=correctify, correctify_size=correctify_size)
+        ahis_pred.append(ahi_pred)
+        ahis_true.append(ahi_true)
+    return ahis_pred, ahis_true
+
+def get_ahis_single_recording(y_pred, y_true, hypnogram_data, class_data, thr, correctify=False, correctify_size=10):
+    y_pred, y_true, hypnogram_data, class_data = y_pred.reset_index(drop=True), y_true.reset_index(drop=True), hypnogram_data.reset_index(drop=True), class_data.reset_index(drop=True)
+    y_pred = (y_pred > thr)*1
+    y_pred_list = to_event_list(correct(y_pred, size=correctify_size), hypnogram_data, class_data) if correctify else to_event_list(y_pred, hypnogram_data, class_data)
+    y_true_list = to_event_list(y_true, hypnogram_data, class_data)
+    tst_in_h = (hypnogram_data > 0).sum() / 60 / 60
+    ahi_pred = len(y_pred_list) / tst_in_h
+    ahi_true = len(y_true_list) / tst_in_h
+    return ahi_pred, ahi_true

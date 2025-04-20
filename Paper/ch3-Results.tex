@@ -100,9 +100,25 @@ With this threshold, we can analyse the performance based on the event class and
 
 In appendix \todo{ref} we show and discuss the results per sleep stage and the length of the predicted events.
 
-\subsection*{AHI-level performance \todo{both this and the next section need to be reworked after the new AHI calculation}}
+\subsection*{AHI-level performance}
 
-Figure \todo{ref} shows the scatter plots for the predicted and true AHI values of both versions of the model \todo{address the bias towards predicting lower AHIs}. To assess agreement, Figure \todo{ref} displays the corresponding Bland-Altman plots. We found a \todo{highlight the interesting metrics, like level of agreement, ICC, Spearman's rank, ...}. All AHI-level metrics can be found in Table \todo{ref}.
+Figure \ref{fig:ahi-plots} shows the scatter plots for the predicted and true AHI values of both versions of the model. To assess agreement, Figure \ref{fig:bland-altman-plots} displays the corresponding Bland-Altman plots. Both plots show a bias towards predicting higher AHIs for the model without SpO2, while the one with PPG and SpO2 shows lower deviation and near to no bias. We also got a lower RMSE of 7.6 instead of 11.8 when using SpO2.
+For the model with SpO2 we achieved a Spearman rank correlation of 0.917 and an intra-class correlation of  0.91.
+All AHI-level metrics and a comparison to other work can be found in Table \todo{ref}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{images/AhiPlots}
+    \caption{Preedicted AHI plotted against the ground-truth AHI. The left plot shows the model with SpO2 and PPG. The right one shows the result of using only PPG as input. The red line is the identity line. The grid shows the differen AHI severity class boundaries.}
+    \label{fig:ahi-plots}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{images/BlandAltmanPlots}
+    \caption{Bland-Altman plots for the true and predicted AHI values. The left plot shows the model with SpO2 and PPG. The right one shows the result of using only PPG as input. The grey line is the mean difference and the grey, dashed lines are levels of agreement, computed as 1.96 times the standard deviation of the differences.}
+    \label{fig:bland-altman-plots}
+\end{figure}
 
 \subsection*{Severity-class-level performance}
 

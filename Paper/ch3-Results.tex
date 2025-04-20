@@ -123,7 +123,7 @@ To assess the importance of the correct sleep stage prediction, we trained a mod
 
 \section{Correcting model output}
 
-After applying the threshold for the prediction, a correction step was applied. This step removed events shorter than a specified number of seconds (called the correction size) and merged events that were closer than the correctification size. Figure \ref{fig:correction-size} displays the impact of the correctification size and shows that settings this value too low allows more prediction errors to pass through, while setting it too high removes many true positives. A correction size of 3 seconds seems to be the best option.
+After applying the threshold for the prediction, a correction step was applied. This step removed events shorter than a specified number of seconds (called the correction size) and merged events that were closer than the correction size. Figure \ref{fig:correction-size} displays the impact of the correction size and shows that settings this value too low allows more prediction errors to pass through, while setting it too high removes many true positives. A correction size of 3 seconds seems to be the best option.
 
 \begin{figure}
     \centering

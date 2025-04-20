@@ -134,7 +134,7 @@ where $N$ is the number of samples (or seconds in our case), $y_i$ is the true l
 
 As for batching, we used randomly selected 32 30-minute segments from four different recordings each to mitigate batch overfitting on sleep patterns of a single participant.
 
-During testing, we used a sliding window apprach, were each recording was split into 30-minute segments with a 2-minute overlap \ref{fig:slidingwindow}. Model predictions were then concatinated, disregarding each first and last minute to create the final prediction for the whole night. This approach allows us to predict recordings of arbitrary length, on which metrics like the AHI can be calculated.
+During testing, we used a sliding window approach, were each recording was split into 30-minute segments with a 2-minute overlap \ref{fig:slidingwindow}. Model predictions were then concatenated, disregarding each first and last minute to create the final prediction for the whole night. This approach allows us to predict recordings of arbitrary length, on which metrics like the AHI can be calculated.
 
 \begin{figure}
     \centering
@@ -147,11 +147,11 @@ Each fold has been trained on a single NVIDIA A40 GPU with 48GB VRAM with a time
 
 \subsection*{Evaluation Metrics}
 
-Several metrics are employed to measure the perfomance of the model, that can be divided into three categories:
+Several metrics are employed to measure the performance of the model, that can be divided into three categories:
 
 \subsubsection*{A. Event-level metrics}
 
-To assess the model perfomance on an event level, regardless of the length of the night, we use the event-level metrics. They are calculated by extracting events from the predicted probabilities by thresholding the probabilities and counting each consecutive sequences of 1s as a single event. To mitigate outliers, we disregarded events shorter than 3 seconds and combined consecutive events that are less than 3 seconds apart into one event. We call this the \textit{output correction}.
+To assess the model performance on an event level, regardless of the length of the night, we use the event-level metrics. They are calculated by extracting events from the predicted probabilities by thresholding the probabilities and counting each consecutive sequences of 1s as a single event. To mitigate outliers, we disregarded events shorter than 3 seconds and combined consecutive events that are less than 3 seconds apart into one event. We call this the \textit{output correction}.
 
 Olsen et al. \cite{olsen2020robust} defined scoring rules on the event-level that are defined as follows: A predicted event, that overlaps with a true event, gets classified as a true positive (TP). If a predicted event has no overlapping true event, it gets counted as a false positive (FP). If a true event doesn't overlap with any predicted event, it gets counted as a false negative (FN). Note that there are no true negatives (TN) on the event-level. In this work, we use a more strict version of their rules, that were adjusted by Xie et al. \cite{xie2023use}, and in which each event can only be used for scoring one time. Meaning that if a predicted event overlaps with multiple true events, only one true event gets counted as TP, while the others are counted as FN. The same applies the other way around, where a true event can only be counted as TP once and other overlapping predicted events are counted as FP. A visual example can be seen Figure \ref{fig:eventscoring}. From this, we can now compute the following metrics:
 
@@ -174,7 +174,7 @@ Olsen et al. \cite{olsen2020robust} defined scoring rules on the event-level tha
     \label{fig:eventscoring}
 \end{figure}
 
-\todo{Add \\newpage if the table isn't above this} As these metrics depend on the selection for a proper threshold, we \todo{we or we'll?} show these metrics as a function of the threshold.
+As these metrics depend on the selection for a proper threshold, we \todo{we or we'll?} show these metrics as a function of the threshold.
 
 \subsubsection*{B. AHI-level metrics}
 
@@ -197,7 +197,7 @@ Dividing the total number of apnea events by the TST (in hours) gives us the mos
     \end{equation}
     where $d_i$ is the difference between the ranks of the two AHI values for each participant, and n is the number of participants.
     The coefficient ranges from -1 to 1, where -1 indicates a perfect negative correlation, 0 indicates no correlation, and 1 indicates a perfect positive correlation.
-    \item Finally, we also calculated the \textbf{Intraclass Correlation Coefficient} (ICC) \todo{what is it? which one do we use? how is it computed maybe?}
+    \item Finally, we also calculate the \textbf{Intraclass Correlation Coefficient} (ICC), \todo{what is it? which one do we use? how is it computed maybe?}
 \end{itemize}
 
 \subsubsection*{C. Severity-class-level metrics}

@@ -103,7 +103,7 @@ The core of the detection model is an adapted version of the U-Net architecture,
 Our model can leverage three types of attention:
 
 \begin{itemize}
-    \item \textbf{Self-Attention in the bottleneck}: The self-attention mechanism, originally proposed by Vaswani et al. \cite{vaswani2017attention}, computes relevance vectors for each input feature through their query (Q) and key (K) matricies. By multiplicating this vector with the value matrix (V), the model learns long-range dependencies throughout the sequence, making it possible to focus on the important parts of the input data. The self-attention mechanism is computed as:
+    \item \textbf{Self-Attention in the bottleneck}: The self-attention mechanism, originally proposed by Vaswani et al. \cite{vaswani2017attention}, computes relevance vectors for each input feature through their query (Q) and key (K) matrices. By multiplicating this vector with the value matrix (V), the model learns long-range dependencies throughout the sequence, making it possible to focus on the important parts of the input data. The self-attention mechanism is computed as:
     \begin{equation}
         \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
     \end{equation}

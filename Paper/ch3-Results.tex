@@ -104,7 +104,7 @@ In appendix \todo{ref} we show and discuss the results per sleep stage and the l
 
 Figure \ref{fig:ahi-plots} shows the scatter plots for the predicted and true AHI values of both versions of the model. To assess agreement, Figure \ref{fig:bland-altman-plots} displays the corresponding Bland-Altman plots. Both plots show a bias towards predicting higher AHIs for the model without SpO2, while the one with PPG and SpO2 shows lower deviation and near to no bias. We also got a lower RMSE of 7.6 instead of 11.8 when using SpO2.
 For the model with SpO2 we achieved a Spearman rank correlation of 0.917 and an intra-class correlation of  0.91.
-All AHI-level metrics and a comparison to other work can be found in Table \todo{ref}.
+All AHI-level metrics and a comparison to other work can be found in Table \ref{tab:ahi-level-metrics}.
 
 \begin{figure}
     \centering
@@ -120,11 +120,74 @@ All AHI-level metrics and a comparison to other work can be found in Table \todo
     \label{fig:bland-altman-plots}
 \end{figure}
 
+\renewcommand{\arraystretch}{1.5}
+\begin{table}
+    \centering
+    \begin{tabular}{ l p{1cm} p{2.5cm} p{1cm} p{1cm} p{1.5cm} }
+        Model & r & ICC, 95\%CI & RMSE & Bias & SD error \\
+        \hline
+        PPG + SpO2 & \textbf{0.917} & \textbf{0.91} [0.90, 0.92] & \textbf{7.62} & \textbf{0.04} & \textbf{7.62} \\
+        PPG only   & 0.842 & 0.81 [0.73, 0.86] & 11.8 & 4.56 & 10.8 \\
+        \hline
+        \cite{fonseca2024estimating}, MESA & 0.87 & 0.88 [0.86, 0.90] & 9.67 & -0.58 & 9.66 \\
+        \cite{fonseca2024estimating}, All datasets & 0.89 & 0.91 [0.89, 0.92] & 8.88 & -0.85 & 8.84 \\
+    \end{tabular}
+    \caption{AHI-level metrics for our work with and without SpO2 compared to results from Fonseca et al. \label{tab:ahi-level-metrics}}
+\end{table}
+
 \subsection*{Severity-class-level performance}
 
-Figure \todo{ref} shows the confusion matrices for the predicted severity classes using the hard thresholds and the NBL version. Although a strong focus on the true prediction diagonal can be seen, the bias towards predicting lower severity classes is also visible like in the AHI-level results.
+Figure \ref{fig:severity-class-level-confusion-matrices} shows the confusion matrices for the predicted severity classes using the hard thresholds and the NBL version. Although a strong focus on the true prediction diagonal can be seen in both models, the bias towards predicting higher severity classes for the PPG only model is still visible.
 
-We shows the models discrimination ability in Table \todo{ref}. \todo{which values to highlight?}
+\begin{figure}
+      \begin{subfigure}{\textwidth}
+          \includegraphics[width=\textwidth]{images/SevClassConfMatrix}
+          \caption{Model with SpO2 and PPG}
+      \end{subfigure}
+      \begin{subfigure}{\textwidth}
+          \includegraphics[width=\textwidth]{images/SevClassConfMatrixNoSpO2}
+          \caption{Model with PPG only}
+      \end{subfigure}
+    \caption{Confusion matrices for the predicted and true severity classes with and without NBL and for both models. (a) shows the model with SpO2 and PPG, while (b) shows the model with PPG only.}
+    \label{fig:severity-class-level-confusion-matrices}
+\end{figure}
+
+We show the models discrimination ability in Table \todo{ref}, where we show binarized confusion matric results for no SDB vs SDB, mild vs moderate SDB, and moderate vs severe SDB. As before, the model with access to SpO2 performed better and NBL increased results. Most PPG + SpO2 model metrics exceed 90\% while the PPG only model struggles especially with specificity and NPV. Likelihood ratios are also shown, achieving values of $\geq 4$ and $\leq 0.2$ for positive and negative likelihood ratios respectively in most cases, showing good diagnostic performance.
+
+\renewcommand{\arraystretch}{1.5}
+\begin{table}
+    \centering
+    \begin{tabular}{ p{1.5cm} p{2cm} p{1cm} p{1cm} p{1cm} p{1cm} p{1cm} p{1cm} p{1cm} }
+        Min. \newline Sev. & N $\geq$ thr \newline (\% $\geq$ thr)  & Acc. & Sens. & Spec. & PPV & NPV & LR+ & LR- \\
+        \hline
+        \hline
+        \multicolumn{5}{c}{PPG + SpO2} \\
+        \hline
+        Mild & 1625 (86\%) & 0.912 & 0.929 & 0.804 & 0.968 & 0.639 & 4.736 & 0.089 \\
+        Moderate & 997 (53\%) & 0.889 & 0.882 & 0.898 & 0.907 & 0.870 & 8.650 & 0.132 \\
+        Severe & 462 (25\%) & 0.917 & 0.848 & 0.939 & 0.820 & 0.950 & 13.990 & 0.161 \\
+        \hline
+        \multicolumn{5}{c}{PPG + SpO2 (NBL)} \\
+        \hline
+        Mild & 1625 (86\%) & \textbf{0.974} & \textbf{0.983} & 0.918 & \textbf{0.987} & 0.897 & 11.941 & \textbf{0.018} \\
+        Moderate & 997 (53\%) & 0.938 & 0.937 & 0.939 & 0.945 & 0.929 & 15.319 & 0.067 \\
+        Severe & 462 (25\%) & 0.958 & 0.909 & \textbf{0.974} & 0.919 & \textbf{0.970} & \textbf{34.840} & 0.093 \\
+        \hline
+        \hline
+        \multicolumn{5}{c}{PPG only} \\
+        \hline
+        Mild & 1625 (86\%) & 0.891 & 0.944 & 0.553 & 0.931 & 0.608 & 2.112 & 0.101 \\
+        Moderate & 997 (53\%) & 0.815 & 0.922 & 0.694 & 0.773 & 0.887 & 3.015 & 0.113 \\
+        Severe & 462 (25\%) & 0.839 & 0.870 & 0.829 & 0.624 & 0.951 & 5.099 & 0.157 \\
+        \hline
+        \multicolumn{5}{c}{PPG only (NBL)} \\
+        \hline
+        Mild & 1625 (86\%) & 0.938 & 0.974 & 0.714 & 0.956 & 0.809 & 3.401 & 0.037 \\
+        Moderate & 997 (53\%) & 0.859 & 0.943 & 0.764 & 0.819 & 0.922 & 4.002 & 0.075 \\
+        Severe & 462 (25\%) & 0.886 & 0.905 & 0.880 & 0.711 & 0.966 & 7.547 & 0.108 \\
+    \end{tabular}
+    \caption{Diagnostic performance of our models. The best values all come from the PPG + SpO2 model with NBL. \label{tab:severity-class-level-metrics}}
+\end{table}
 
 \section{Importance of correct Sleep Stages}
 

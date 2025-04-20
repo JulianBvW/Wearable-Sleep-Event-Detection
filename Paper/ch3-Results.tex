@@ -48,7 +48,7 @@ Figure \ref{fig:preprocessingresults} shows the recall, precision, and F1-score 
 
 \subsection*{Event-level performance}
 
-Figure \ref{fig:event-metrics} shows the recall, precision, and F1-score over each threshold for the main SDB detection model, which uses the PPG-predicted hypnogram, the PPG itself with the in-model technique, and the SpO2. The Figure also shows a version of the model without the SpO2 signal, which means it relies solely on the PPG data. As can be seen, omitting the SpO2 signal has a significant impact on the performance, as the peak F1-score drops from 69.7\% to 61.6\%.
+Figure \ref{fig:event-metrics} shows the recall, precision, and F1-score over each threshold for the main SDB detection model, which uses the PPG-predicted hypnogram, the PPG itself with the in-model technique, and the SpO2. The Figure also shows a version of the model without the SpO2 signal, which means it relies solely on the PPG data. As can be seen, omitting the SpO2 signal has a significant impact on the performance, as the peak F1-score drops from 69.7\% to 61.6\%. The threshold for the best performance was determined to be 0.25.
 
 \begin{figure}
     \centering
@@ -66,22 +66,26 @@ Test and training losses together with the peak F1-score over the epochs are dis
     \label{fig:event-epoch-losses}
 \end{figure}
 
-The threshold for the best performance was determined to be 0.25 and the final event-level metrics are shown in Table \ref{tab:final-metrics}.
+We show our final event-level metrics together with a comparison to other studies in Table \ref{tab:final-metrics}.
 
 \renewcommand{\arraystretch}{1.5}
 \begin{table}
     \centering
-    \begin{tabular}{ l c }
-        Metric & Score \\
+    \begin{tabular}{ l l c c c }
+        Model & Signals & Prec. & Rec. & F1\\
         \hline
-        Precision & 70.94\% \\
-        Recall    & 68.46\% \\
-        F1-Score  & 69.68\% \\
+        \cite{olsen2020robust}* & ECG & 73.4\% & 70.9\% & 72.1\% \\
+        \cite{xie2023use}* & ECG, RE & 56.5\% & 77.4\% & 70.8\% \\
+        \cite{xie2024multi} & ECG, RE & 63.3\% & 63.0\% & 63.1\% \\
+        \cite{li2023deep}** & Airflow, EEG & 87.3\% & 83.7\% & 85.7\% \\
+        \cite{yook2024deep}** & Airflow, SpO2 & 93.0\% & 91.0\% & 93.0\% \\
+        \cite{lazazzera2020detection}** & PPG, SpO2 & - & 76.9\% & - \\
+        Ours & PPG, SpO2 & 70.94\% & 68.46\% & 69.68\% \\
     \end{tabular}
-    \caption{Final metrics for the SDB detection model trained on the PPG-predicted hypnogram, the SpO2 signal, and the in-model processed PPG at a classification threshold of 0.25. \label{tab:final-metrics}}
+    \caption{Result comparison between other work and our SDB detection model. Models that use the airflow signal achieve the best results. *Studies that use the ground-truth, PSG-computed sleep stages. **Studies that classify 60- or 10-second long epochs instead of events, as our event scoring metric does. \label{tab:final-metrics}}
 \end{table}
 
-With this threshold, we can analyse the performance based on the event class and sleep stage. Table \ref{tab:event-class-distribution} shows the distribution of event classes in the dataset and the models detection rate. The dataset is highly imbalanced, with 2/3 of all events being hypopneas. Still, the model was best in detecting mixed apneas, with a near 90\% detection rate, while hypopneas were only detected about 2/3 of the time.
+With the threshold of 0.25, we can analyse the performance based on the event class and sleep stage. Table \ref{tab:event-class-distribution} shows the distribution of event classes in the dataset and the models detection rate. The dataset is highly imbalanced, with 2/3 of all events being hypopneas. Still, the model was best in detecting mixed apneas, with a near 90\% detection rate, while hypopneas were only detected about 2/3 of the time.
 
 \renewcommand{\arraystretch}{1.5}
 \begin{table}

@@ -68,7 +68,7 @@ The number of different apnea classes is shown in Table \ref{tab:dataset-apnea-c
 \section{Signals and Preprocessing}
 
 We used the PPG and SpO2 signals from the MESA dataset, which were recorded at 256Hz and 1Hz, respectively. A third input to the model is the hypnogram from Bakker et al. \cite{bakker2021estimating}, which was predicted at $\frac{1}{30}$Hz and on PPG only, ensuring that the model still relies solely on data it can retrieve from the PPG sensor in the real world.
-We denoised the PPG signal using a lowpass filter with a cutoff frequency of 5Hz.
+We denoised the PPG signal using a lowpass filter with a cutoff frequency of 5Hz. An example of this denoising can be found in \todo{appendix}.
 
 \todo{data: events by real sleep stages,
 data: tst true vs pred correlation}
@@ -220,3 +220,5 @@ Metrics on this binarized view include the \textbf{Likelihood ratios} (LR), whic
     LR+ &= \frac{Sensitivity}{1-Specificity} \\
     LR- &= \frac{1-Sensitivity}{Specificity} 
 \end{align}
+
+Other common metrics are defined in \todo{appendix}.

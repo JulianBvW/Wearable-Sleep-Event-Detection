@@ -81,6 +81,7 @@ We show our final event-level metrics together with a comparison to other studie
         \cite{yook2024deep}** & Airflow, SpO2 & 93.0\% & 91.0\% & 93.0\% \\
         \cite{lazazzera2020detection}** & PPG, SpO2 & - & 76.9\% & - \\
         Ours & PPG, SpO2 & 70.94\% & 68.46\% & 69.68\% \\
+        Ours & \todo{PPG} & & & \\
     \end{tabular}
     \caption{Result comparison between other work and our SDB detection model. Models that use the airflow signal achieve the best results. *Studies that use the ground-truth, PSG-computed sleep stages. **Studies that classify 60- or 10-second long epochs instead of events, as our event scoring metric does. \label{tab:final-metrics}}
 \end{table}
@@ -195,7 +196,7 @@ We show the models discrimination ability in Table \ref{tab:severity-class-level
 
 \section{Importance of correct Sleep Stages}
 
-To assess the importance of the correct sleep stage prediction, we trained a model with the ground-truth hypnogram, the PPG-generated hypnogram, and finally without any sleep stage information, letting the model only rely on PPG and SpO2. Figure \ref{fig:sleep-stage-importance} shows the event-level metrics for each of these experiments. With the exception of the recall for lower thresholds, the models performance reduces consistently, the less certain it is on sleep stages. Peak F1-score for the model without a hypnogram was only 56.9\%, a 13\% drop from the version with the PPG-predicted hypnogram and a 20\% drop from the model that has access to the ground-truth sleep stages, which got up to 76.1\%.
+To assess the value of correct sleep stage prediction, we trained a model with the ground-truth hypnogram, the PPG-generated hypnogram, and finally without any sleep stage information, letting the model only rely on PPG and SpO2. Figure \ref{fig:sleep-stage-importance} shows the event-level metrics for each of these experiments. With the exception of the recall for lower thresholds, the models performance reduces consistently, the less certain it is on sleep stages. Peak F1-score for the model without a hypnogram was only 56.9\%, a 13\% drop from the version with the PPG-predicted hypnogram and a 20\% drop from the model that has access to the ground-truth sleep stages, which got up to 76.1\%.
 
 \begin{figure}
     \centering
@@ -203,6 +204,25 @@ To assess the importance of the correct sleep stage prediction, we trained a mod
     \caption{Precision, recall, and F1-score for the SDB detection model with different sleep stage information. The more the models sleep stage information gets to the ground-truth hypnogram, the better the performance.}
     \label{fig:sleep-stage-importance}
 \end{figure}
+
+Table \todo{table} also shows the detection rate for events in different sleep stages. One can see, that \todo{... is most prevelant ... N3 as protective stage not so much ... best rate in ...}
+
+\renewcommand{\arraystretch}{1.5}
+\begin{table}
+    \centering
+    \begin{tabular}{ l p{2cm} p{2cm} p{2cm} p{2cm} }
+        & Wake & N1/N2 & N3 & REM \\
+        \hline
+        Stage \% of all nigths & 25.1\% & 2.0\% & 6.3\%  &  66.7\% \\
+        \hline
+        Events (N) & 43243 & 4299 & 12486 & 111826 \\
+        \% of all events & 70.7\% & 89.4\% & 81.9\% & 68.8\% \\
+        \hline
+        Found (N) & 43243 & 4299 & 12486 & 111826 \\
+        \% found & 70.7\% & 89.4\% & 81.9\% & 68.8\% \\
+    \end{tabular}
+    \caption{\todo{TBA}. \label{tab:sleep-stage-distribution}}
+\end{table}
 
 \section{Correcting model output}
 

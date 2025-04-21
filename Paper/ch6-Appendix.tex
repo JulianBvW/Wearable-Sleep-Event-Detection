@@ -1,9 +1,63 @@
 \chapter{Appendix \label{Chapter-Appendix}}
 
-Todos:
-\begin{itemize}
-    \item should I show an example of the models output %https://github.com/JulianBvW/Wearable-Sleep-Event-Detection/blob/main/Notebooks/32_look_at_outputs.ipynb
-    \item should I talk about the denoising techniques? should I show an example of them? Or just the one I used (lowpass)? Results are without cross validation %https://github.com/JulianBvW/Wearable-Sleep-Event-Detection/blob/main/Notebooks/38_frequency_filters.ipynb
-    \item don't show the kfold balancing analysis, right? table was enough %https://github.com/JulianBvW/Wearable-Sleep-Event-Detection/blob/main/Notebooks/44_kfold_generator.ipynb
-    \item Evaluation per Sleep Stage, and Event lengths %https://github.com/JulianBvW/Wearable-Sleep-Event-Detection/blob/main/Notebooks/61_info_results.ipynb
-\end{itemize}
+\section{Predicted sleep stages}
+
+To obtain sleep stage predictions for our model, we used a pre-trained cardiorespiratory sleep staging model, as described by Bakker et al. \cite{bakker2021estimating}. The model was designed to use any arbitrary combination of input signals to predict the 4-class hypnogram (Wake, combined N1/N2, N3, and REM). We opted to use only the PPG signal to fit our goal. When evaluating against Somnolyzer scorings of the MESA dataset, we achieved a Cohen's Kappa of 0.57, showing moderate agreement. Table \ref{tab:predicted-hypnogram-results} shows additional metrics and classification tasks, like a binary wake versus sleep task.
+
+\renewcommand{\arraystretch}{1.5}
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{ l c c c c c }
+        Task & Kappa & Acc. & Se. & Sp. & PPV \\
+        \hline
+        4-cl. (Wake/N1-N2/N3/REM) & 0.566 [0.436, 0.677] & 73.2\% [64.8\%, 80.0\%] & - & - & - \\
+        3-cl. (Wake/NREM/REM) & 0.628 [0.473, 0.740] & 79.4\% [70.8\%, 85.6\%] & - & - & - \\
+        2-cl. (Wake/Sleep) & 0.653 [0.475, 0.778] & 84.6\% [76.2\%, 90.3\%] & 73.1\% [56.9\%, 84.9\%] & 91.8\% (8.37\%) & 89.6\% [79.0\%, 95.2\%] \\
+    \end{tabular}
+    \caption{PPG-based sleep stage prediction performances against Somnolyzer scorings on different tasks. Values are presented as median and 25th and 75th percentiles, median [Q1, Q2], or (in case of normally distributed data) as mean and standard deviation, mean (sd). \label{tab:predicted-hypnogram-results}}
+\end{table}
+
+Figure \todo{ref} shows the true TSTs from Somnolyzer plotted against the predicted TSTs and the Bland-Altman-Plot. The sleep stage predictor achieved a RMSE of 1.1 (hours) and \todo{spearman r}.
+
+\todo{figure}
+
+\chapter{Lowpass denoising of the PPG signal}
+
+\todo{FIGURE, Comparison of the original signal (blue) and the denoised signal (orange) for a random 10-second PPG window from our dataset. We used a lowpass filter with a cutoff frequency of 5Hz.}
+
+\section{Near-boundary double-labeling}
+
+In NBL, single AHIs can get assigned to a second severity class, if they are near the boundaries. The specific values are as follows:
+
+\renewcommand{\arraystretch}{1.5}
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{ l c c }
+        Severity class & Hard boundaries & NBL boundaries \\
+        \hline
+        Normal   & $ AHI < 5 $         & $ AHI < 7 $             \\
+        Mild     & $ 5 \le AHI < 15 $  & $ 2.4 \le AHI < 17.4 $  \\
+        Moderate & $ 15 \le AHI < 30 $ & $ 12.4 \le AHI < 35.2 $ \\
+        Severe   & $ 30 \le AHI $      & $ 26.6 \le AHI $        \\
+    \end{tabular}
+\end{table}
+
+\chapter{Severity-class-level metrics}
+
+\renewcommand{\arraystretch}{1.5}
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{p{3cm} p{2cm} p{4.4cm}}
+        Metric & Calculation & Meaning \\
+        \hline
+        Accurracy \newline (Acc) & $\frac{TP+TN}{TP+FP+FN+TN}$ & What \% got correctly \newline classified? \\
+        Sensitivity \newline (Se, alt. Recall) & $\frac{TP}{TP+FN}$ & What \% of positives got \newline correctly classified? \\
+        Specificity \newline (Sp) & $\frac{TN}{TN+FP}$ & What \% of negatives got \newline correctly classified? \\
+        Positive Predicted \newline Value (PPV) & $\frac{TP}{TP+FP}$ & What \% of predicted positives \newline where really positive? \\
+        Negative Predicted \newline Value (NPV) & $\frac{TN}{TN+FN}$ & What \% of predicted negatives \newline where really negative? \\
+    \end{tabular}
+\end{table}
+
+\chapter{Example model output}
+
+\todo{FIGURE, Top and bottom rows show the true labels (event or not); second row show the predicted probabilities of the models sigmoid layer; third row shows an applied example threshold of ???; fourth row shows the thresholded predictions after the correction step. One can see, that ....}

@@ -128,7 +128,7 @@ All AHI-level metrics and a comparison to other work can be found in Table \ref{
 \begin{table}
     \centering
     \begin{tabular}{ l p{1cm} p{2.5cm} p{1cm} p{1cm} p{1.5cm} }
-        Model & r & ICC, 95\%CI & RMSE & Bias & SD error \\
+        Model & $\rho$ & ICC, 95\%CI & RMSE & Bias & SD error \\
         \hline
         PPG + SpO2 & \textbf{0.917} & \textbf{0.91} [0.90, 0.92] & \textbf{7.62} & \textbf{0.04} & \textbf{7.62} \\
         PPG only   & 0.842 & 0.81 [0.73, 0.86] & 11.8 & 4.56 & 10.8 \\
@@ -136,7 +136,7 @@ All AHI-level metrics and a comparison to other work can be found in Table \ref{
         \cite{fonseca2024estimating}, MESA & 0.87 & 0.88 [0.86, 0.90] & 9.67 & -0.58 & 9.66 \\
         \cite{fonseca2024estimating}, All datasets & 0.89 & 0.91 [0.89, 0.92] & 8.88 & -0.85 & 8.84 \\
     \end{tabular}
-    \caption{AHI-level metrics for our work with and without SpO2 compared to results from Fonseca et al. \label{tab:ahi-level-metrics}}
+    \caption{AHI-level metrics for our work with and without SpO2 compared to results from Fonseca et al. Both Spearman's $\rho$ and the ICC are statistically significant with $p < 0.0001$. \label{tab:ahi-level-metrics}}
 \end{table}
 
 \subsection*{Severity-class-level performance}

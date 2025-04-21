@@ -70,7 +70,7 @@ The number of different apnea classes is shown in Table \ref{tab:dataset-apnea-c
 We used the PPG and SpO2 signals from the MESA dataset, which were recorded at 256Hz and 1Hz, respectively. A third input to the model is the hypnogram from Bakker et al. \cite{bakker2021estimating}, which was predicted at $\frac{1}{30}$Hz and on PPG only, ensuring that the model still relies solely on data it can retrieve from the PPG sensor in the real world.
 We denoised the PPG signal using a lowpass filter with a cutoff frequency of 5Hz.
 
-\todo{data: events by real sleep stages
+\todo{data: events by real sleep stages,
 data: tst true vs pred correlation}
 
 To analyse the importance of correct sleep stage information, we also tested a version of the model that uses the "ground-truth" Somnolyzer hypnogram instead of the predicted one.
@@ -200,14 +200,18 @@ Dividing the total number of apnea events by the TST (in hours) gives us the mos
     \end{equation}
     where $d_i$ is the difference between the ranks of the two AHI values for each participant, and n is the number of participants.
     The coefficient ranges from -1 to 1, where -1 indicates a perfect negative correlation, 0 indicates no correlation, and 1 indicates a perfect positive correlation.
-    \item Finally, we also calculate the \textbf{Intraclass Correlation Coefficient} (ICC), \todo{what is it? which one do we use? how is it computed maybe?}
+    \item Finally, we also calculate the \textbf{Intraclass Correlation Coefficient} (ICC), which is a measure of reliability between two or more raters, in our case the predicted and true AHI values. We use the ICC(2,1) version, which is a two-way random effects model for absolute agreement. It ranges from 0 to 1, where 0 indicates no agreement and 1 indicates perfect agreement. \todo{no formula}
 \end{itemize}
 
 \subsubsection*{C. Severity-class-level metrics}
 
 The last set of metrics we used is the severity-class-level metrics, which are calculated on the AHI severity classes. As mentioned, the boundaries for the severity classes are defined as follows: Normal (AHI $<$ 5), Mild (5 $\le$ AHI $<$ 15), Moderate (15 $\le$ AHI $<$ 30), and Severe (AHI $\ge$ 30). As small errors in the AHI around these hard thresholds can lead to a wrong classification, we used near-boundary double-labeling (NBL), which allows us to assign two classes for AHIs that fall in the range of about 2.5 around the boundaries. Exact values can be found in \todo{appendix}.
 
-Using these four classes we can plot the confusion matrix and compute model \textbf{Accuray} (Acc), defined as the number of correctly classified patients divided by the total number of patients, and the \textbf{Cohen's Kappa} ($\kappa$) \todo{what is it? how is it computed?}.
+Using these four classes we can plot the confusion matrix and compute model \textbf{Accuray} (Acc), defined as the number of correctly classified patients divided by the total number of patients, and the \textbf{Cohen's Kappa} ($\kappa$), which is a measure of agreement between the predicted and true classes, taking into account the possibility of random agreement. Cohen's Kappa is calculated as:
+\begin{equation}
+    \kappa = \frac{p_o - p_e}{1 - p_e}
+\end{equation}
+where $p_o$ is the observed agreement and $p_e$ is the expected agreement. Its value ranges from -1 to 1, where -1 indicates perfect disagreement, 0 indicates no agreement, and 1 indicates perfect agreement.
 
 Finally, this matrix can be binarized to assess the discrimination ability between normal to abnormal (mild-severe), mild to moderate, and moderate to severe SDB. \todo{should I create a table explaining all (Acc, Sen, Spe, PPV, NPV, LR+, LR-) metrics again or is LR enough?}
 Metrics on this binarized view include the \textbf{Likelihood ratios} (LR), which give insight in how much a test result changes the odds of having the disease, or in our case, the specific severity classes. These likelihoods can be computed as positive and negative likelihood ratios (LR+ and LR-), which are defined as:

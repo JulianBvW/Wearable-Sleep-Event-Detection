@@ -8,7 +8,7 @@ Over 6,800 men and women from six different US communities were approached in th
 To obtain ground-truth SDB events, we used the automatic Somnolyzer scoring system \cite{anderer2022automated}, which scored the respiratory events based on the recommended criteria from the American Academy of Sleep Medicine (AASM) \cite{troester2023aasm}: apnea events were defined as a 90\% or greater reduction in airflow for at least 10 seconds, while hypopnea events were defined as a 30\% or greater reduction in airflow for at least 10 seconds, with either a $\geq 3\%$ oxygen desaturation or an associated arousal.
 
 To leverage the different expressions of respiratory events in different sleep stages, we explored the use of sleep stage classes as an additional input to our model. To do so, we used a previously developed sleep staging algorithm created by Bakker et al. \cite{bakker2021estimating}, restricted to only use PPG signals as inputs, ensuring that our algorithm doesn't depend on signals outside of the finger-worn PPG sensor setup.
-We achieved a pooled Cohen's Kappa of 0.55 when measuring agreement between the PPG-predicted hypnogram\footnote{Bakker's model combined N1 and N2 stages into one, resulting in four stages: Wake, N1/N2, N3, and REM. For calculating the Kappa, Somnolyzer scorings were adjusted to the same format} and the the ground-truth Somnolyzer PSG-derived hypnogram, showing moderate agreement. A detailed performance comparison can be found in \todo{Appendix XY}.
+We achieved a pooled Cohen's Kappa of 0.55 when measuring agreement between the PPG-predicted hypnogram\footnote{Bakker's model combined N1 and N2 stages into one, resulting in four stages: Wake, N1/N2, N3, and REM. For calculating the Kappa, Somnolyzer scorings were adjusted to the same format} and the the ground-truth Somnolyzer PSG-derived hypnogram, showing moderate agreement. A detailed performance comparison can be found in Appendix \ref{Apx-Pred-Hypnogram}.
 
 Filtering the MESA participants for those with PPG and SpO2 data, Somnolyzer scorings, and available predicted hypnograms, we ended up with a dataset size of 1,880 participants. Table \ref{tab:dataset-demographics} shows the demographic distribution and sleep times of our dataset subset together with the folds, generated for cross validation as discussed later in this chapter.
 To assess SDB severity, the AHI is often categorized into four classes. These so called severity classes are defined as follows: Normal (AHI $<$ 5), Mild (5 $\le$ AHI $<$ 15), Moderate (15 $\le$ AHI $<$ 30), and Severe (AHI $\ge$ 30).
@@ -68,10 +68,7 @@ The number of different apnea classes is shown in Table \ref{tab:dataset-apnea-c
 \section{Signals and Preprocessing}
 
 We used the PPG and SpO2 signals from the MESA dataset, which were recorded at 256Hz and 1Hz, respectively. A third input to the model is the hypnogram from Bakker et al. \cite{bakker2021estimating}, which was predicted at $\frac{1}{30}$Hz and on PPG only, ensuring that the model still relies solely on data it can retrieve from the PPG sensor in the real world.
-We denoised the PPG signal using a lowpass filter with a cutoff frequency of 5Hz. An example of this denoising can be found in \todo{appendix}.
-
-\todo{data: events by real sleep stages,
-data: tst true vs pred correlation}
+We denoised the PPG signal using a lowpass filter with a cutoff frequency of 5Hz. An example of this denoising can be found in Appendix \ref{Apx-Denoise}.
 
 To analyse the importance of correct sleep stage information, we also tested a version of the model that uses the "ground-truth" Somnolyzer hypnogram instead of the predicted one.
 
@@ -205,7 +202,7 @@ Dividing the total number of apnea events by the TST (in hours) gives us the mos
 
 \subsubsection*{C. Severity-class-level metrics}
 
-The last set of metrics we used is the severity-class-level metrics, which are calculated on the AHI severity classes. As mentioned, the boundaries for the severity classes are defined as follows: Normal (AHI $<$ 5), Mild (5 $\le$ AHI $<$ 15), Moderate (15 $\le$ AHI $<$ 30), and Severe (AHI $\ge$ 30). As small errors in the AHI around these hard thresholds can lead to a wrong classification, we used near-boundary double-labeling (NBL), which allows us to assign two classes for AHIs that fall in the range of about 2.5 around the boundaries. Exact values can be found in \todo{appendix}.
+The last set of metrics we used is the severity-class-level metrics, which are calculated on the AHI severity classes. As mentioned, the boundaries for the severity classes are defined as follows: Normal (AHI $<$ 5), Mild (5 $\le$ AHI $<$ 15), Moderate (15 $\le$ AHI $<$ 30), and Severe (AHI $\ge$ 30). As small errors in the AHI around these hard thresholds can lead to a wrong classification, we used near-boundary double-labeling (NBL), which allows us to assign two classes for AHIs that fall in the range of about 2.5 around the boundaries. Exact values can be found in Appendix \ref{Apx-NBL}.
 
 Using these four classes we can plot the confusion matrix and compute model \textbf{Accuray} (Acc), defined as the number of correctly classified patients divided by the total number of patients, and the \textbf{Cohen's Kappa} ($\kappa$), which is a measure of agreement between the predicted and true classes, taking into account the possibility of random agreement. Cohen's Kappa is calculated as:
 \begin{equation}
@@ -213,12 +210,12 @@ Using these four classes we can plot the confusion matrix and compute model \tex
 \end{equation}
 where $p_o$ is the observed agreement and $p_e$ is the expected agreement. Its value ranges from -1 to 1, where -1 indicates perfect disagreement, 0 indicates no agreement, and 1 indicates perfect agreement.
 
-Finally, this matrix can be binarized to assess the discrimination ability between normal to abnormal (mild-severe), mild to moderate, and moderate to severe SDB. \todo{should I create a table explaining all (Acc, Sen, Spe, PPV, NPV, LR+, LR-) metrics again or is LR enough?}
+Finally, this matrix can be binarized to assess the discrimination ability between normal to abnormal (mild-severe), mild to moderate, and moderate to severe SDB.
 Metrics on this binarized view include the \textbf{Likelihood ratios} (LR), which give insight in how much a test result changes the odds of having the disease, or in our case, the specific severity classes. These likelihoods can be computed as positive and negative likelihood ratios (LR+ and LR-), which are defined as:
 
 \begin{align}
     LR+ &= \frac{Sensitivity}{1-Specificity} \\
-    LR- &= \frac{1-Sensitivity}{Specificity} 
+    LR- &= \frac{1-Sensitivity}{Specificity} \\
 \end{align}
 
-Other common metrics are defined in \todo{appendix}.
+Other common metrics are defined in Appendix \ref{Apx-Severity-Metrics}.

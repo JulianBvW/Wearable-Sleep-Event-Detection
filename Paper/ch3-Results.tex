@@ -103,7 +103,7 @@ With the threshold of 0.25, we can analyse the performance based on the event cl
     \caption{Distribution of event classes in the full dataset and how many of the different classes were detected by our model. Although the dataset is greatly inbalanced to hypopneas (2/3 of all) and against mixed apneas (only 2\%), the detection rates greater for apneas than for hypopneas. \label{tab:event-class-distribution}}
 \end{table}
 
-In appendix \todo{ref} we show and discuss the results per sleep stage and the length of the predicted events.
+In Appendix \ref{Apx-Output} we show an example of the models output.
 
 \subsection*{AHI-level performance}
 
@@ -205,15 +205,15 @@ To assess the value of correct sleep stage prediction, we trained a model with t
     \label{fig:sleep-stage-importance}
 \end{figure}
 
-Table \todo{table} also shows the detection rate for events in different sleep stages. One can see, that \todo{... is most prevelant ... N3 as protective stage not so much ... best rate in ...}
+Table \ref{tab:sleep-stage-distribution} also shows the detection rate for events in different sleep stages. One can see, that \todo{... is most prevelant ... N3 as protective stage not so much ... best rate in ...}
 
 \renewcommand{\arraystretch}{1.5}
 \begin{table}
     \centering
-    \begin{tabular}{ l p{2cm} p{2cm} p{2cm} p{2cm} }
+    \begin{tabular}{ l p{1.6cm} p{1.6cm} p{1.6cm} p{1.6cm} }
         & Wake & N1/N2 & N3 & REM \\
         \hline
-        Stage \% of all nigths & 25.1\% & 2.0\% & 6.3\%  &  66.7\% \\
+        Stage \% of all nights & 25.1\% & 2.0\% & 6.3\%  &  66.7\% \\
         \hline
         Events (N) & 43243 & 4299 & 12486 & 111826 \\
         \% of all events & 70.7\% & 89.4\% & 81.9\% & 68.8\% \\
@@ -221,7 +221,7 @@ Table \todo{table} also shows the detection rate for events in different sleep s
         Found (N) & 43243 & 4299 & 12486 & 111826 \\
         \% found & 70.7\% & 89.4\% & 81.9\% & 68.8\% \\
     \end{tabular}
-    \caption{\todo{TBA}. \label{tab:sleep-stage-distribution}}
+    \caption{Prevalence of different sleep stages as well as the distribution of events in these classes. The number of events found by our model together with its detection rates is also shown. \label{tab:sleep-stage-distribution}}
 \end{table}
 
 \section{Correcting model output}

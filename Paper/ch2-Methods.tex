@@ -1,5 +1,9 @@
 \chapter{Methods \label{Chapter-Methods}}
 
+In this chapter, we describe the methods used in this work. We start with a description of the dataset used, followed by a description of the signals and preprocessing steps. We then describe the model architecture and training process, including the cross-validation strategy and evaluation metrics. Finally, we discuss the implementation details and hyperparameters used in our experiments.
+
+The full implementation of our work is available on GitHub at \url{https://github.com/JulianBvW/Wearable-Sleep-Event-Detection/}.
+
 \section{Dataset}
 
 The data we used in this work came from the Multi-Ethnic Study of Atherosclerosis (MESA) \cite{chen2015racial}, a large-scale sleep study aimed to investigate correlations between sleep quality, cardiovascular health, SDB, and other factors across different ethnic groups.
@@ -95,6 +99,7 @@ The core of the detection model is an adapted version of the U-Net architecture,
     \label{fig:model}
 \end{figure}
 
+\newpage
 \subsection*{Attention mechanisms}
 
 Our model can leverage the following two types of attention:
@@ -197,7 +202,7 @@ Dividing the total number of apnea events by the TST (in hours) gives us the mos
     \end{equation}
     where $d_i$ is the difference between the ranks of the two AHI values for each participant, and n is the number of participants.
     The coefficient ranges from -1 to 1, where -1 indicates a perfect negative correlation, 0 indicates no correlation, and 1 indicates a perfect positive correlation.
-    \item Finally, we also calculate the \textbf{Intraclass Correlation Coefficient} (ICC), which is a measure of reliability between two or more raters, in our case the predicted and true AHI values. We use the ICC(2,1) version, which is a two-way random effects model for absolute agreement. It ranges from 0 to 1, where 0 indicates no agreement and 1 indicates perfect agreement. \todo{no formula}
+    \item Finally, we also calculate the \textbf{Intraclass Correlation Coefficient} (ICC), which is a measure of reliability between two or more raters, in our case the predicted and true AHI values. We use the ICC(2,1) version\footnote{specifically, we use the implementation of Pythons \texttt{pingouin} package to calculate the \texttt{ICC2, Single random raters}}, which is a two-way random effects model for absolute agreement. It ranges from 0 to 1, where 0 indicates no agreement and 1 indicates perfect agreement.
 \end{itemize}
 
 \subsubsection*{C. Severity-class-level metrics}

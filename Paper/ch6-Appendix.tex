@@ -1,6 +1,6 @@
 \chapter{Appendix \label{Chapter-Appendix}}
 
-\section{Predicted sleep stages \label{Apx-Pred-Hypnogram}}
+\section{Predicted Sleep Stages\label{Apx-Pred-Hypnogram}}
 
 To obtain sleep stage predictions for our model, we used a pre-trained cardiorespiratory sleep staging model, as described by Bakker et al. \cite{bakker2021estimating}. The model was designed to use any arbitrary combination of input signals to predict the 4-class hypnogram (Wake, combined N1/N2, N3, and REM). We opted to use only the PPG signal to fit our goal. When evaluating against Somnolyzer scorings of the MESA dataset, we achieved a Cohen's Kappa of 0.57, showing moderate agreement. Table \ref{tab:predicted-hypnogram-results} shows additional metrics and classification tasks, like a binary wake versus sleep task.
 
@@ -28,7 +28,7 @@ Figure \ref{fig:tst-plot} shows the true TSTs from Somnolyzer plotted against th
     \label{fig:tst-plot}
 \end{figure}
 
-\section{Lowpass denoising of the PPG signal \label{Apx-Denoise}}
+\section{Lowpass Denoising of the PPG Signal\label{Apx-Denoise}}
 
 \begin{figure}[h!]
     \centering
@@ -37,7 +37,7 @@ Figure \ref{fig:tst-plot} shows the true TSTs from Somnolyzer plotted against th
     \label{fig:lowpass-example}
 \end{figure}
 
-\section{Near-boundary double-labeling \label{Apx-NBL}}
+\section{Near-boundary Double-labeling\label{Apx-NBL}}
 
 In NBL, single AHIs can get assigned to a second severity class, if they are near the boundaries. The specific values are as follows:
 
@@ -54,7 +54,7 @@ In NBL, single AHIs can get assigned to a second severity class, if they are nea
     \end{tabular}
 \end{table}
 
-\section{Severity-class-level metrics \label{Apx-Severity-Metrics}}
+\section{Severity-class-level Metrics\label{Apx-Severity-Metrics}}
 
 \renewcommand{\arraystretch}{1.5}
 \begin{table}[h!]
@@ -71,7 +71,7 @@ In NBL, single AHIs can get assigned to a second severity class, if they are nea
 \end{table}
 
 \newpage
-\section{Example model output \label{Apx-Output}}
+\section{Example Model Output\label{Apx-Output}}
 
 \begin{figure}[h!]
     \centering

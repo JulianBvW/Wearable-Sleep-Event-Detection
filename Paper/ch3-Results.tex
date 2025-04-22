@@ -225,7 +225,7 @@ Table \ref{tab:sleep-stage-distribution} also shows the detection rate for event
     \caption{Prevalence of different sleep stages as well as the distribution of events in these classes. The number of events found by our model together with its detection rates is also shown. N3 makes up only 7.5\% of all stages during the night and apnea distribution as well as the detection rate were lowest in N3. Disregarding wake phases, N3 made up 11.2\% of sleep, while only having 3\% of all events. In contrast, event distribution in REM stage is overrepresented, as it has 20.9\% of all events, while only making up 15.9\% of sleep. \label{tab:sleep-stage-distribution}}
 \end{table}
 
-\section{Correcting model output}
+\section{Output Correction}
 
 After applying the threshold for the prediction, a correction step was applied. This step removed events shorter than a specified number of seconds (called the correction size) and merged events that were closer than the correction size. Figure \ref{fig:correction-size} displays the impact of the correction size and shows that settings this value too low allows more prediction errors to pass through, while setting it too high removes many true positives. A correction size of 3 seconds seems to be the best option.
 

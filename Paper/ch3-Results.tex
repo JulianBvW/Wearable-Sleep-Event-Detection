@@ -2,7 +2,7 @@
 
 \section{PPG Preprocessing through the VAE}
 
-One of the preprocessing techniques used to "downsample" the PPG signal was the Variational Autoencoder (VAE), whose encoder could be used to transform each 256Hz second into a 1Hz value of 8 dimensions. We tried two versions: The first got a 1-second input and had to reconstruct the exact second. The other one go a 2-second window around the second it should reconstruct. Figure \ref{fig:vaereconstruction} shows the example reconstructions of the two variations and Figure \ref{fig:vaeloss} plots the reconstruction losses over the epochs. As the 5s VAE had a lower loss, we used its encoder for the VAE preprocessing option.
+One of the preprocessing techniques used to "downsample" the PPG signal was the Variational Autoencoder (VAE), whose encoder could be used to transform each 256Hz second into a 1Hz value of 8 dimensions. We tested two versions: The first received a 1-second input and had to reconstruct the exact second. The other one received a 2-second window around the second it should reconstruct, making the input 5 seconds long. Figure \ref{fig:vaereconstruction} shows the example reconstructions of the two variations and Figure \ref{fig:vaeloss} plots the reconstruction losses over the epochs. As the 5s VAE had a lower loss, we used its encoder for the VAE preprocessing option.
 
 \begin{figure}[h]
     \centering
@@ -20,7 +20,7 @@ One of the preprocessing techniques used to "downsample" the PPG signal was the 
 
 \section{Preprocessing impact on performance}
 
-Figure \ref{fig:preprocessingresults} shows the recall, precision, and F1-score for the SDB detection model with the different preprocessing techniques. While neither the statistical nor the VAE preprocessing approach reached the same performance as the in-model approach, using both statistical and VAE preprocessing together did reach a similar performance. As both these values would only be needed to be calculated once before the training and not during each epoch, which the in-model approach did, training time got reduced significantly by a factor of 3. This can be seen in Table \ref{tab:preprocessing-times}.
+Figure \ref{fig:preprocessingresults} shows the recall, precision, and F1-score for the SDB detection model with the different preprocessing techniques. While neither the statistical nor the VAE preprocessing approach reached the same performance as the in-model approach, using both statistical and VAE preprocessing together did reach a similar performance. As both these values would only need to be calculated once before the training and not during each epoch, which the in-model approach did, training time was reduced significantly by a factor of 3. This can be seen in Table \ref{tab:preprocessing-times}.
 
 \begin{figure}
     \centering
@@ -66,7 +66,7 @@ Test and training losses together with the peak F1-score over the epochs are dis
     \label{fig:event-epoch-losses}
 \end{figure}
 
-We show our final event-level metrics together with a comparison to other studies in Table \ref{tab:final-metrics}.
+We present our final event-level metrics together with a comparison to other studies in Table \ref{tab:final-metrics}.
 
 \renewcommand{\arraystretch}{1.5}
 \begin{table}
@@ -86,7 +86,7 @@ We show our final event-level metrics together with a comparison to other studie
     \caption{Result comparison between other work and our SDB detection model. Models that use the airflow signal achieve the best results. *Studies that use the ground-truth, PSG-computed sleep stages. **Studies that classify 60- or 10-second long epochs instead of events, as our event scoring metric does. \label{tab:final-metrics}}
 \end{table}
 
-With the threshold of 0.25, we can analyse the performance based on the event class and sleep stage. Table \ref{tab:event-class-distribution} shows the distribution of event classes in the dataset and the models detection rate. The dataset is highly imbalanced, with 2/3 of all events being hypopneas. Still, the model was best in detecting mixed apneas, with a near 90\% detection rate, while hypopneas were only detected about 2/3 of the time.
+With the threshold of 0.25, we can analyze the performance based on the event class and sleep stage. Table \ref{tab:event-class-distribution} shows the distribution of event classes in the dataset and the model's detection rate. The dataset is highly imbalanced, with 2/3 of all events being hypopneas. Still, the model was best in detecting mixed apneas, with a near 90\% detection rate, while hypopneas were only detected about 2/3 of the time.
 
 \renewcommand{\arraystretch}{1.5}
 \begin{table}
@@ -100,21 +100,21 @@ With the threshold of 0.25, we can analyse the performance based on the event cl
         Found (N) & 43243 & 4299 & 12486 & 111826 \\
         \% found & 70.7\% & 89.4\% & 81.9\% & 68.8\% \\
     \end{tabular}
-    \caption{Distribution of event classes in the full dataset and how many of the different classes were detected by our model. Although the dataset is greatly inbalanced to hypopneas (2/3 of all) and against mixed apneas (only 2\%), the detection rates greater for apneas than for hypopneas. \label{tab:event-class-distribution}}
+    \caption{Distribution of event classes in the full dataset and how many of the different classes were detected by our model. Although the dataset is greatly imbalanced to hypopneas (2/3 of all) and against mixed apneas (only 2\%), the detection rates are greater for apneas than for hypopneas. \label{tab:event-class-distribution}}
 \end{table}
 
-In Appendix \ref{Apx-Output} we show an example of the models output.
+In Appendix \ref{Apx-Output} we show an example of the model's output.
 
 \subsection*{AHI-level performance}
 
-Figure \ref{fig:ahi-plots} shows the scatter plots for the predicted and true AHI values of both versions of the model. To assess agreement, Figure \ref{fig:bland-altman-plots} displays the corresponding Bland-Altman plots. Both plots show a bias towards predicting higher AHIs for the model without SpO2, while the one with PPG and SpO2 shows lower deviation and near to no bias. We also got a lower RMSE of 7.6 instead of 11.8 when using SpO2.
-For the model with SpO2 we achieved a Spearman rank correlation of 0.917 and an intra-class correlation of  0.91.
+Figure \ref{fig:ahi-plots} shows the scatter plots for the predicted and true AHI values of both versions of the model. To assess agreement, Figure \ref{fig:bland-altman-plots} displays the corresponding Bland-Altman plots. Both plots show a bias towards predicting higher AHIs for the model without SpO2, while the one with PPG and SpO2 shows lower deviation and near-to-no bias. We also got a lower RMSE of 7.6 instead of 11.8 when using SpO2.
+For the model with SpO2, we achieved a Spearman rank correlation of 0.917 and an intra-class correlation of  0.91.
 All AHI-level metrics and a comparison to other work can be found in Table \ref{tab:ahi-level-metrics}.
 
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{images/AhiPlots}
-    \caption{Preedicted AHI plotted against the ground-truth AHI. The left plot shows the model with SpO2 and PPG. The right one shows the result of using only PPG as input. The red line is the identity line. The grid shows the differen AHI severity class boundaries.}
+    \caption{Preedicted AHI plotted against the ground-truth AHI. The left plot shows the model with SpO2 and PPG. The right one shows the result of using only PPG as input. The red line is the identity line. The grid shows the different AHI severity class boundaries.}
     \label{fig:ahi-plots}
 \end{figure}
 
@@ -142,7 +142,7 @@ All AHI-level metrics and a comparison to other work can be found in Table \ref{
 
 \subsection*{Severity-class-level performance}
 
-Figure \ref{fig:severity-class-level-confusion-matrices} shows the confusion matrices for the predicted severity classes using the hard thresholds and the NBL version. Although a strong focus on the true prediction diagonal can be seen in both models, the bias towards predicting higher severity classes for the PPG only model is still visible.
+Figure \ref{fig:severity-class-level-confusion-matrices} shows the confusion matrices for the predicted severity classes using the hard thresholds and the NBL version. Although a strong focus on the true prediction diagonal can be seen in both models, the bias towards predicting higher severity classes for the PPG-only model is still visible.
 
 \begin{figure}
       \begin{subfigure}{\textwidth}
@@ -157,7 +157,7 @@ Figure \ref{fig:severity-class-level-confusion-matrices} shows the confusion mat
     \label{fig:severity-class-level-confusion-matrices}
 \end{figure}
 
-We show the models discrimination ability in Table \ref{tab:severity-class-level-metrics}, where we show binarized confusion matric results for no SDB vs SDB, mild vs moderate SDB, and moderate vs severe SDB. As before, the model with access to SpO2 performed better and NBL increased results. Most PPG + SpO2 model metrics exceed 90\% while the PPG only model struggles especially with specificity and NPV. Likelihood ratios are also shown, achieving values of $\geq 4$ and $\leq 0.2$ for positive and negative likelihood ratios respectively in most cases, showing good diagnostic performance.
+We show the model's discrimination ability in Table \ref{tab:severity-class-level-metrics}, where we show binarized confusion matric results for no SDB vs SDB, mild vs moderate SDB, and moderate vs severe SDB. As before, the model with access to SpO2 performed better and NBL increased results. Most PPG + SpO2 model metrics exceed 90\% while the PPG-only model struggles especially with specificity and NPV. Likelihood ratios are also shown, achieving values of $\geq 4$ and $\leq 0.2$ for positive and negative likelihood ratios respectively in most cases, showing good diagnostic performance.
 
 \renewcommand{\arraystretch}{1.5}
 \begin{table}
@@ -196,16 +196,16 @@ We show the models discrimination ability in Table \ref{tab:severity-class-level
 
 \section{Importance of correct Sleep Stages}
 
-To assess the value of correct sleep stage prediction, we trained a model with the ground-truth hypnogram, the PPG-generated hypnogram, and finally without any sleep stage information, letting the model only rely on PPG and SpO2. Figure \ref{fig:sleep-stage-importance} shows the event-level metrics for each of these experiments. With the exception of the recall for lower thresholds, the models performance reduces consistently, the less certain it is on sleep stages. Peak F1-score for the model without a hypnogram was only 56.9\%, a 13\% drop from the version with the PPG-predicted hypnogram and a 20\% drop from the model that has access to the ground-truth sleep stages, which got up to 76.1\%.
+To assess the value of correct sleep stage prediction, we trained a model with the ground-truth hypnogram, the PPG-generated hypnogram, and finally without any sleep stage information, letting the model only rely on PPG and SpO2. Figure \ref{fig:sleep-stage-importance} shows the event-level metrics for each of these experiments. With the exception of the recall for lower thresholds, the model's performance reduces consistently, the less certain it is about sleep stages. Peak F1-score for the model without a hypnogram was only 56.9\%, a 13\% drop from the version with the PPG-predicted hypnogram and a 20\% drop from the model that has access to the ground-truth sleep stages, which got up to 76.1\%.
 
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{images/SleepStages}
-    \caption{Precision, recall, and F1-score for the SDB detection model with different sleep stage information. The more the models sleep stage information gets to the ground-truth hypnogram, the better the performance.}
+    \caption{Precision, recall, and F1-score for the SDB detection model with different sleep stage information. The more the model's sleep stage information gets to the ground-truth hypnogram, the better the performance.}
     \label{fig:sleep-stage-importance}
 \end{figure}
 
-Table \ref{tab:sleep-stage-distribution} also shows the detection rate for events in different sleep stages. One can see, that combined N1/N2 is most prevelant, while N3 not only makes up the rarest sleep stage, but it also has the least amount of apnea events relatively, as N3 is a protective stage against apneas. Detection rate was also lowest in N3, while combined N1/N2 and REM had similar rates.
+Table \ref{tab:sleep-stage-distribution} also shows the detection rate for events in different sleep stages. One can see, that combined N1/N2 is most prevalant, while N3 not only makes up the rarest sleep stage, but it also has the least amount of apnea events relatively, as N3 is a protective stage against apneas. The detection rate was also the lowest in N3, while combined N1/N2 and REM had similar rates.
 
 \renewcommand{\arraystretch}{1.5}
 \begin{table}
@@ -222,12 +222,12 @@ Table \ref{tab:sleep-stage-distribution} also shows the detection rate for event
         Found (N) & - & 131098 & 4480 & 36276 \\
         \% found & - & 70.7\% & 61.0\% & 71.1\% \\
     \end{tabular}
-    \caption{Prevalence of different sleep stages as well as the distribution of events in these classes. The number of events found by our model together with its detection rates is also shown. N3 makes up only 7.5\% of all stages during the night and apnea distribution as well as the detection rate were lowest in N3. Disregarding wake phases, N3 made up 11.2\% of sleep, while only having 3\% of all events. In contrast, event distribution in REM stage is overrepresented, as it has 20.9\% of all events, while only making up 15.9\% of sleep. \label{tab:sleep-stage-distribution}}
+    \caption{Prevalence of different sleep stages as well as the distribution of events in these classes. The number of events found by our model together with its detection rates is also shown. N3 makes up only 7.5\% of all stages during the night and apnea distribution as well as the detection rate were lowest in N3. Disregarding wake phases, N3 made up 11.2\% of sleep, while only having 3\% of all events. In contrast, event distribution in the REM stage is overrepresented, as it has 20.9\% of all events, while only making up 15.9\% of sleep. \label{tab:sleep-stage-distribution}}
 \end{table}
 
 \section{Output Correction}
 
-After applying the threshold for the prediction, a correction step was applied. This step removed events shorter than a specified number of seconds (called the correction size) and merged events that were closer than the correction size. Figure \ref{fig:correction-size} displays the impact of the correction size and shows that settings this value too low allows more prediction errors to pass through, while setting it too high removes many true positives. A correction size of 3 seconds seems to be the best option.
+After applying the threshold for the prediction, a correction step was applied. This step removed events shorter than a specified number of seconds (called the correction size) and merged events that were closer than the correction size. Figure \ref{fig:correction-size} displays the impact of the correction size and shows that setting this value too low allows more prediction errors to pass through, while setting it too high removes many true positives. A correction size of 3 seconds seems to be the best option.
 
 \begin{figure}
     \centering

@@ -7,15 +7,15 @@ The full implementation of our work is available on GitHub at \url{https://githu
 \section{Dataset}
 
 The data we used in this work came from the Multi-Ethnic Study of Atherosclerosis (MESA) \cite{chen2015racial}, a large-scale sleep study aimed to investigate correlations between sleep quality, cardiovascular health, SDB, and other factors across different ethnic groups.
-Over 6,800 men and women from six different US communities were approached in the initial examination. For the final sleep exam ten years later, 288 participants were ineligible\footnote{due to undergoing apnea treatment, living to far away, or other reasons}, roughly 2,700 were not contacted, and roughly 1,500 refused to participate. From the 2,261 participants undergoing the sleep exam, 2,060 had full-night PSG recordings, 2,156 had actigraphy data, and 2,240 completed a sleep questionnaire.
+Over 6,800 men and women from six different US communities were approached in the initial examination. For the final sleep exam ten years later, 288 participants were ineligible\footnote{due to undergoing apnea treatment, living too far away, or other reasons}, roughly 2,700 were not contacted, and roughly 1,500 refused to participate. From the 2,261 participants undergoing the sleep exam, 2,060 had full-night PSG recordings, 2,156 had actigraphy data, and 2,240 completed a sleep questionnaire.
 
 To obtain ground-truth SDB events, we used the automatic Somnolyzer scoring system \cite{anderer2022automated}, which scored the respiratory events based on the recommended criteria from the American Academy of Sleep Medicine (AASM) \cite{troester2023aasm}: apnea events were defined as a 90\% or greater reduction in airflow for at least 10 seconds, while hypopnea events were defined as a 30\% or greater reduction in airflow for at least 10 seconds, with either a $\geq 3\%$ oxygen desaturation or an associated arousal.
 
-To leverage the different expressions of respiratory events in different sleep stages, we explored the use of sleep stage classes as an additional input to our model. To do so, we used a previously developed sleep staging algorithm created by Bakker et al. \cite{bakker2021estimating}, restricted to only use PPG signals as inputs, ensuring that our algorithm doesn't depend on signals outside of the finger-worn PPG sensor setup.
-We achieved a pooled Cohen's Kappa of 0.55 when measuring agreement between the PPG-predicted hypnogram\footnote{Bakker's model combined N1 and N2 stages into one, resulting in four stages: Wake, N1/N2, N3, and REM. For calculating the Kappa, Somnolyzer scorings were adjusted to the same format} and the the ground-truth Somnolyzer PSG-derived hypnogram, showing moderate agreement. A detailed performance comparison can be found in Appendix \ref{Apx-Pred-Hypnogram}.
+To leverage the different expressions of respiratory events in different sleep stages, we explored the use of sleep stage classes as an additional input to our model. To do so, we used a previously developed sleep staging algorithm created by Bakker et al. \cite{bakker2021estimating}, restricted to only use PPG signals as inputs, ensuring that our algorithm does not depend on signals outside of the finger-worn PPG sensor setup.
+We achieved a pooled Cohen's Kappa of 0.55 when measuring agreement between the PPG-predicted hypnogram\footnote{Bakker's model combined N1 and N2 stages into one, resulting in four stages: Wake, N1/N2, N3, and REM. For calculating the Kappa, Somnolyzer scorings were adjusted to the same format} and the ground-truth Somnolyzer PSG-derived hypnogram, showing moderate agreement. A detailed performance comparison can be found in Appendix \ref{Apx-Pred-Hypnogram}.
 
-Filtering the MESA participants for those with PPG and SpO2 data, Somnolyzer scorings, and available predicted hypnograms, we ended up with a dataset size of 1,880 participants. Table \ref{tab:dataset-demographics} shows the demographic distribution and sleep times of our dataset subset together with the folds, generated for cross validation as discussed later in this chapter.
-To assess SDB severity, the AHI is often categorized into four classes. These so called severity classes are defined as follows: Normal (AHI $<$ 5), Mild (5 $\le$ AHI $<$ 15), Moderate (15 $\le$ AHI $<$ 30), and Severe (AHI $\ge$ 30).
+Filtering the MESA participants for those with PPG and SpO2 data, Somnolyzer scorings, and available predicted hypnograms, we ended up with a dataset size of 1,880 participants. Table \ref{tab:dataset-demographics} shows the demographic distribution and sleep times of our dataset subset together with the folds, generated for cross-validation as discussed later in this chapter.
+To assess SDB severity, the AHI is often categorized into four classes. These so-called severity classes are defined as follows: Normal (AHI $<$ 5), Mild (5 $\le$ AHI $<$ 15), Moderate (15 $\le$ AHI $<$ 30), and Severe (AHI $\ge$ 30).
 Table \ref{tab:dataset-ahi} shows their distribution.
 The number of different apnea classes is shown in Table \ref{tab:dataset-apnea-classes}.
 
@@ -50,7 +50,7 @@ The number of different apnea classes is shown in Table \ref{tab:dataset-apnea-c
         \hline
         Full & $21.9\pm18.0$ \newline \textbf{[0.3, 107]} & 244 & 605 & 548 & 483 \\
     \end{tabular}
-    \caption{AHI and severity class distribution accross folds and full dataset subset. Format for the AHI is mean $\pm$ std [min, max]. \label{tab:dataset-ahi}}
+    \caption{AHI and severity class distribution across folds and full dataset subset. Format for the AHI is mean $\pm$ std [min, max]. \label{tab:dataset-ahi}}
 \end{table}
 
 \renewcommand{\arraystretch}{1.5}
@@ -74,7 +74,7 @@ The number of different apnea classes is shown in Table \ref{tab:dataset-apnea-c
 We used the PPG and SpO2 signals from the MESA dataset, which were recorded at 256Hz and 1Hz, respectively. A third input to the model is the hypnogram from Bakker et al. \cite{bakker2021estimating}, which was predicted at $\frac{1}{30}$Hz and on PPG only, ensuring that the model still relies solely on data it can retrieve from the PPG sensor in the real world.
 We denoised the PPG signal using a lowpass filter with a cutoff frequency of 5Hz. An example of this denoising can be found in Appendix \ref{Apx-Denoise}.
 
-To analyse the importance of correct sleep stage information, we also tested a version of the model that uses the "ground-truth" Somnolyzer hypnogram instead of the predicted one.
+To analyze the importance of correct sleep stage information, we also tested a version of the model that uses the ground-truth Somnolyzer hypnogram instead of the predicted one.
 
 \subsection*{PPG Preprocessing}
 
@@ -90,12 +90,12 @@ Each preprocessing method brings the PPG signal down to 1Hz with multiple dimens
 
 \section{Model Architecture}
 
-The core of the detection model is an adapted version of the U-Net architecture, originally proposed for 2D image segmentation by Ronneberger et al. \cite{ronneberger2015u}. The U-Net architecture improves an encoder-decoder structure by adding skip connections between the corresponding encoder and decoder layers, which allows the model to learn both low-level and high-level features. The adapted model uses 1D convolutions on the temporal dimension instead of 2D convolutions on the width and height of images. The output of the U-Net has the same resolution as the input, which allows the model to classify each second as either part of an event or of normal breathing. This in turn allows us or the user to analyse the prediction on an event level, instead of just the AHI level, which can be important, as studies showed links between apnea event duration and health that go beyond the AHI severity classifications \cite{butler2019apnea}. Figure \ref{fig:model} shows the model architecture and the DCBs, that are also used for the preprocessing VAE.
+The core of the detection model is an adapted version of the U-Net architecture, originally proposed for 2D image segmentation by Ronneberger et al. \cite{ronneberger2015u}. The U-Net architecture improves an encoder-decoder structure by adding skip connections between the corresponding encoder and decoder layers, which allows the model to learn both low-level and high-level features. The adapted model uses 1D convolutions on the temporal dimension instead of 2D convolutions on the width and height of images. The output of the U-Net has the same resolution as the input, which allows the model to classify each second as either part of an event or of normal breathing. This in turn allows us or the user to ze the prediction on an event level, instead of just the AHI level, which can be important, as studies showed links between apnea event duration and health that go beyond the AHI severity classifications \cite{butler2019apnea}. Figure \ref{fig:model} shows the model architecture and the DCBs, that are also used for the preprocessing VAE.
 
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{images/Model}
-    \caption{Architecture of the model and shape of the data flowing through the network. $L$ is the sequence length, which is 30 minutes in our case. $C$ is the number of input features (or channels for the convolutions), with the hypnogram and SpO2 signal having one channel each, while the number of PPG channels depend on the preprocessing technique used. The convolutions kernel sizes are 3 for the DCBs and 1 for the output convolution.}
+    \caption{Architecture of the model and shape of the data flowing through the network. $L$ is the sequence length, which is 30 minutes in our case. $C$ is the number of input features (or channels for the convolutions), with the hypnogram and SpO2 signal having one channel each, while the number of PPG channels depends on the preprocessing technique used. The convolution kernel sizes are 3 for the DCBs and 1 for the output convolution.}
     \label{fig:model}
 \end{figure}
 
@@ -112,15 +112,15 @@ Our model can leverage the following two types of attention:
     where $d_k$ is the dimension of the key matrix and the softmax function normalizes the attention scores, ensuring that they sum to 1.
     Using Self-Attention can increase model complexity greatly due to their quadratic complexity, which is why we apply it in the bottleneck, where the temporal resolution is at its lowest.
     \item \textbf{Attention gates}: Originally proposed for the task of medical pancreas image segmentation by Oktay et al. \cite{oktay2018attention}, attention gates are employed at the skip connections of the U-Net and help the model highlight important regions while suppressing irrelevant ones. They work by learning a gate that refines the skip connection (encoder) features before concatenation. This gate is computed from the same incoming skip connection features and the decoder features from the layer below.
-    % \item \textbf{Squeeze-and-Excitation (SE) blocks}: The SE block, proposed by Hu et al. \cite{hu2018squeeze}, is a lightweight attention mechanism that computes channel-wise feature importance. It works in two parts: First, the squeeze operation creates feature maps accross the spatial dimensions using global average pooling, resulting in a 1D vector for each channel. Then, in the excitation part, two fully connected linear layers with ReLU activation transform this vector and multiply it with the input, effectively weighting the channels by importance. \todo{delete as it is not used}
+    % \item \textbf{Squeeze-and-Excitation (SE) blocks}: The SE block, proposed by Hu et al. \cite{hu2018squeeze}, is a lightweight attention mechanism that computes channel-wise feature importance. It works in two parts: First, the squeeze operation creates feature maps across the spatial dimensions using global average pooling, resulting in a 1D vector for each channel. Then, in the excitation part, two fully connected linear layers with ReLU activation transform this vector and multiply it with the input, effectively weighting the channels by importance.
 \end{itemize}
 
 \section{Training and Evaluation}
 
 \subsection*{Cross-Validation}
 
-To ensure statistical validity, we used a fixed seed of $42$ and a 4-fold cross-validation approach balanced for AHI severity class. In k-fold cross-validation, the dataset is split into k equal parts (called folds). One then selects one fold as the test set and trains the model on the remaining k-1 folds. This process is repeated k times, each time with a different fold as the test set, and the evaluation results on the test sets are averaged to obtain a more reliable estimate of the model's performance. This approach helps to mitigate the risk of overfitting and provides a more robust evaluation of the model's generalization ability. Figure \ref{fig:crossvalidation} illustrates the cross-validation process.
-As seen in Tables \ref{tab:dataset-demographics}, \ref{tab:dataset-ahi}, and \ref{tab:dataset-apnea-classes}, the folds are not only balanced for AHI severity class, but also show a good distribution of demographic data.
+To ensure statistical validity, we used a fixed seed of $42$ and a 4-fold cross-validation approach balanced for the AHI severity class. In k-fold cross-validation, the dataset is split into k equal parts (called folds). One then selects one fold as the test set and trains the model on the remaining k-1 folds. This process is repeated k times, each time with a different fold as the test set, and the evaluation results on the test sets are averaged to obtain a more reliable estimate of the model's performance. This approach helps to mitigate the risk of overfitting and provides a more robust evaluation of the model's generalization ability. Figure \ref{fig:crossvalidation} illustrates the cross-validation process.
+As seen in Tables \ref{tab:dataset-demographics}, \ref{tab:dataset-ahi}, and \ref{tab:dataset-apnea-classes}, the folds are not only balanced for the AHI severity class but also show a good distribution of demographic data.
 
 \begin{figure}
     \centering
@@ -131,15 +131,15 @@ As seen in Tables \ref{tab:dataset-demographics}, \ref{tab:dataset-ahi}, and \re
 
 \subsection*{Training Parameters and Setup}
 
-The training targets are one-dimensional vectors with the same length as the input sequence, where each second is labeled as either 0, indicating normal breathing, or 1, indicating an apnea event. The final layer of the model is a sigmoid activation function, that maps each second to an event probability value between 0 and 1. During training, we optimize the binary cross-entropy loss\footnote{specifically, we use PyTorch's \texttt{nn.BCEWithLogitsLoss()}, which combines the sigmoid activation and BCE loss into one class, as it is more stable than doing these operation in sequence.} (BCE) between the predicted probabilities and the true labels. The BCE loss is defined as:
+The training targets are one-dimensional vectors with the same length as the input sequence, where each second is labeled as either 0, indicating normal breathing, or 1, indicating an apnea event. The final layer of the model is a sigmoid activation function, that maps each second to an event probability value between 0 and 1. During training, we optimize the binary cross-entropy loss\footnote{specifically, we use PyTorch's \texttt{nn.BCEWithLogitsLoss()}, which combines the sigmoid activation and BCE loss into one class, as it is more stable than doing these operations in sequence.} (BCE) between the predicted probabilities and the true labels. The BCE loss is defined as:
 \begin{equation}
     \text{BCE} = \frac{1}{N}\sum_{i=1}^{N} [ y_i \cdot \log(p_i) + (1 - y_i) \cdot \log(1 - p_i) ]
 \end{equation}
 where $N$ is the number of samples (or seconds in our case), $y_i$ is the true label (0 or 1, normal or abnormal breathing), and $p_i$ is the predicted probability for sample $i$. The loss is then averaged over each batch and parsed to the optimizer, in our case the Adam optimizer with a learning rate of 0.001.
 
-As for batching, we used randomly selected 32 30-minute segments from four different recordings each to mitigate batch overfitting on sleep patterns of a single participant.
+As for batching, we used randomly selected 32 30-minute segments from four different recordings each to mitigate batch overfitting on the sleep patterns of a single participant.
 
-During testing, we used a sliding window approach, were each recording was split into 30-minute segments with a 2-minute overlap \ref{fig:slidingwindow}. Model predictions were then concatenated, disregarding each first and last minute to create the final prediction for the whole night. This approach allows us to predict recordings of arbitrary length, on which metrics like the AHI can be calculated.
+During testing, we used a sliding window approach, where each recording was split into 30-minute segments with a 2-minute overlap \ref{fig:slidingwindow}. Model predictions were then concatenated, disregarding each first and last minute to create the final prediction for the whole night. This approach allows us to predict recordings of arbitrary length, on which metrics like the AHI can be calculated.
 
 \begin{figure}
     \centering
@@ -152,13 +152,13 @@ Each fold has been trained on a single NVIDIA A40 GPU with 48GB VRAM with a time
 
 \subsection*{Evaluation Metrics}
 
-Several metrics are employed to measure the performance of the model, that can be divided into three categories:
+Several metrics are employed to measure the performance of the model, which can be divided into three categories:
 
 \subsubsection*{A. Event-level metrics}
 
-To assess the model performance on an event level, regardless of the length of the night, we use the event-level metrics. They are calculated by extracting events from the predicted probabilities by thresholding the probabilities and counting each consecutive sequences of 1s as a single event. To mitigate outliers, we disregarded events shorter than 3 seconds and combined consecutive events that are less than 3 seconds apart into one event. We call this the \textit{output correction}.
+To assess the model performance on an event level, regardless of the length of the night, we use the event-level metrics. They are calculated by extracting events from the predicted probabilities by thresholding the probabilities and counting each consecutive sequence of 1s as a single event. To mitigate outliers, we disregarded events shorter than 3 seconds and combined consecutive events that are less than 3 seconds apart into one event. We call this the \textit{output correction}.
 
-Olsen et al. \cite{olsen2020robust} defined scoring rules on the event-level that are defined as follows: A predicted event, that overlaps with a true event, gets classified as a true positive (TP). If a predicted event has no overlapping true event, it gets counted as a false positive (FP). If a true event doesn't overlap with any predicted event, it gets counted as a false negative (FN). Note that there are no true negatives (TN) on the event-level. In this work, we use a more strict version of their rules, that were adjusted by Xie et al. \cite{xie2023use}, and in which each event can only be used for scoring one time. Meaning that if a predicted event overlaps with multiple true events, only one true event gets counted as TP, while the others are counted as FN. The same applies the other way around, where a true event can only be counted as TP once and other overlapping predicted events are counted as FP. A visual example can be seen Figure \ref{fig:eventscoring}. From this, we can now compute the following metrics:
+Olsen et al. \cite{olsen2020robust} defined scoring rules on the event level that are defined as follows: A predicted event, that overlaps with a true event, gets classified as a true positive (TP). If a predicted event has no overlapping true event, it gets counted as a false positive (FP). If a true event does not overlap with any predicted event, it gets counted as a false negative (FN). Note that there are no true negatives (TN) on the event level. In this work, we use a more strict version of their rules, which were adjusted by Xie et al. \cite{xie2023use}, and in which each event can only be used for scoring one time. This means that if a predicted event overlaps with multiple true events, only one true event gets counted as TP, while the others are counted as FN. The same applies the other way around, where a true event can only be counted as TP once and other overlapping predicted events are counted as FP. A visual example can be seen in Figure \ref{fig:eventscoring}. From this, we can now compute the following metrics:
 
 \renewcommand{\arraystretch}{1.5}
 \begin{table}[h!]
@@ -179,7 +179,7 @@ Olsen et al. \cite{olsen2020robust} defined scoring rules on the event-level tha
     \label{fig:eventscoring}
 \end{figure}
 
-As these metrics depend on the selection for a proper threshold, we \todo{we or we'll?} show these metrics as a function of the threshold.
+As these metrics depend on the selection for a proper threshold, we show these metrics as a function of the threshold.
 
 \subsubsection*{B. AHI-level metrics}
 
@@ -216,7 +216,7 @@ Using these four classes we can plot the confusion matrix and compute model \tex
 where $p_o$ is the observed agreement and $p_e$ is the expected agreement. Its value ranges from -1 to 1, where -1 indicates perfect disagreement, 0 indicates no agreement, and 1 indicates perfect agreement.
 
 Finally, this matrix can be binarized to assess the discrimination ability between normal to abnormal (mild-severe), mild to moderate, and moderate to severe SDB.
-Metrics on this binarized view include the \textbf{Likelihood ratios} (LR), which give insight in how much a test result changes the odds of having the disease, or in our case, the specific severity classes. These likelihoods can be computed as positive and negative likelihood ratios (LR+ and LR-), which are defined as:
+Metrics on this binarized view include the \textbf{Likelihood ratios} (LR), which give insight into how much a test result changes the odds of having the disease, or in our case, the specific severity classes. These likelihoods can be computed as positive and negative likelihood ratios (LR+ and LR-), which are defined as:
 
 \begin{align}
     LR+ &= \frac{Sensitivity}{1-Specificity} \\

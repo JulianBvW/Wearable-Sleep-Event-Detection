@@ -4,7 +4,7 @@
 
 To obtain sleep stage predictions for our model, we used a pre-trained cardiorespiratory sleep staging model, as described by Bakker et al. \cite{bakker2021estimating}. The model was designed to use any arbitrary combination of input signals to predict the 4-class hypnogram (Wake, combined N1/N2, N3, and REM). We opted to use only the PPG signal to fit our goal. When evaluating against Somnolyzer scorings of the MESA dataset, we achieved a Cohen's Kappa of 0.57, showing moderate agreement. Table \ref{tab:predicted-hypnogram-results} shows additional metrics and classification tasks, like a binary wake versus sleep task.
 
-The performance is lower than reported in the original paper, which is due to the fact that they used additional input signals.Combining cardiac information with airflow, their algorithm reached a Kappa of 0.643 in 4-class classification and 0.680 when also incorporating respiratory effort.
+The performance is lower than reported in the original paper, which is due to the fact that they used additional input signals. Combining cardiac information with airflow, their algorithm reached a Kappa of 0.643 in 4-class classification and 0.680 when also incorporating respiratory effort.
 
 \renewcommand{\arraystretch}{1.5}
 \begin{table}[h!]
@@ -19,7 +19,7 @@ The performance is lower than reported in the original paper, which is due to th
     \caption{PPG-based sleep stage prediction performances against Somnolyzer scorings on different tasks. Values are presented as median and 25th and 75th percentiles, median [Q1, Q2], or (in case of normally distributed data) as mean and standard deviation, mean (sd). \label{tab:predicted-hypnogram-results}}
 \end{table}
 
-Figure \ref{fig:tst-plot} shows the true TSTs from Somnolyzer plotted against the predicted TSTs and the Bland-Altman-Plot. The sleep stage predictor achieved a RMSE of 1.1 (hours) and a Spearman rank correlation of 0.712.
+Figure \ref{fig:tst-plot} shows the true TSTs from Somnolyzer plotted against the predicted TSTs and the Bland-Altman-Plot. The sleep stage predictor achieved an RMSE of 1.1 (hours) and a Spearman rank correlation of 0.712.
 
 \begin{figure}
     \centering
@@ -76,6 +76,6 @@ In NBL, single AHIs can get assigned to a second severity class, if they are nea
 \begin{figure}[h!]
     \centering
     \includegraphics[width=1.2\textwidth]{images/ModelOutput}
-    \caption{Example of the model outputs: Top and bottom rows (red) show the true labels (event or not); the second row (blue) shows the predicted probabilities of the models sigmoid layer; the third row (blue) shows an applied example threshold of 0.3; the fourth row (blue) shows the thresholded predictions after the correction step. One can see, how the correction step merges close events (e.g. the first event from the left) and removes too short events (e.g. the event around second 7300).}
+    \caption{Example of the model outputs: Top and bottom rows (red) show the true labels (event or not); the second row (blue) shows the predicted probabilities of the model's sigmoid layer; the third row (blue) shows an applied example threshold of 0.3; the fourth row (blue) shows the thresholded predictions after the correction step. One can see, how the correction step merges close events (e.g. the first event from the left) and removes too short events (e.g. the event around the second 7300).}
     \label{fig:example-output}
 \end{figure}

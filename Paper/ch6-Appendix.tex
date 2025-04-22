@@ -19,9 +19,14 @@ The performance is lower than reported in the original paper, which is due to th
     \caption{PPG-based sleep stage prediction performances against Somnolyzer scorings on different tasks. Values are presented as median and 25th and 75th percentiles, median [Q1, Q2], or (in case of normally distributed data) as mean and standard deviation, mean (sd). \label{tab:predicted-hypnogram-results}}
 \end{table}
 
-Figure \todo{ref} shows the true TSTs from Somnolyzer plotted against the predicted TSTs and the Bland-Altman-Plot. The sleep stage predictor achieved a RMSE of 1.1 (hours) and \todo{spearman r}.
+Figure \ref{fig:tst-plot} shows the true TSTs from Somnolyzer plotted against the predicted TSTs and the Bland-Altman-Plot. The sleep stage predictor achieved a RMSE of 1.1 (hours) and a Spearman rank correlation of 0.712.
 
-\todo{figure}
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{images/TstPlot}
+    \caption{Predicted TST plotted against the true TST from Somnolyzer (left) and the Bland-Altman-Plot (right). The red line is the identity line. The upper and lower gray lines show the levels of agreement.}
+    \label{fig:tst-plot}
+\end{figure}
 
 \section{Lowpass denoising of the PPG signal \label{Apx-Denoise}}
 
@@ -44,7 +49,6 @@ In NBL, single AHIs can get assigned to a second severity class, if they are nea
     \end{tabular}
 \end{table}
 
-\newpage % TODO remove if not needed
 \section{Severity-class-level metrics \label{Apx-Severity-Metrics}}
 
 \renewcommand{\arraystretch}{1.5}

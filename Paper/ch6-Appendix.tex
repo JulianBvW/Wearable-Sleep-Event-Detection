@@ -70,6 +70,12 @@ In NBL, single AHIs can get assigned to a second severity class, if they are nea
     \end{tabular}
 \end{table}
 
+\newpage
 \section{Example model output \label{Apx-Output}}
 
-\todo{FIGURE, Top and bottom rows show the true labels (event or not); second row show the predicted probabilities of the models sigmoid layer; third row shows an applied example threshold of ???; fourth row shows the thresholded predictions after the correction step. One can see, that ....}
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=1.2\textwidth]{images/ModelOutput}
+    \caption{Example of the model outputs: Top and bottom rows (red) show the true labels (event or not); the second row (blue) shows the predicted probabilities of the models sigmoid layer; the third row (blue) shows an applied example threshold of 0.3; the fourth row (blue) shows the thresholded predictions after the correction step. One can see, how the correction step merges close events (e.g. the first event from the left) and removes too short events (e.g. the event around second 7300).}
+    \label{fig:example-output}
+\end{figure}

@@ -7,7 +7,7 @@ One of the preprocessing techniques used to "downsample" the PPG signal was the 
 \begin{figure}[h]
     \centering
     \includegraphics[width=\textwidth]{images/VaeReconstruction}
-    \caption{Example difference in reconstructions of the 1s and 5s VAE for the same signal. Each second has 256 values, which are reduced to only 8 values.}
+    \caption{Example difference in reconstructions of the 1s and 5s VAEs for the same signal. Each second has 256 values, which are reduced to only 8 values in the encoder.}
     \label{fig:vaereconstruction}
 \end{figure}
 
@@ -25,7 +25,7 @@ Figure \ref{fig:preprocessingresults} shows the recall, precision, and F1-score 
 \begin{figure}
     \centering
     \includegraphics[width=0.6\textwidth]{images/PreprocessingResults}
-    \caption{Precision, recall, and F1-score of the SDB detection model with different preprocessing techniques. Although the precision didn't change much, the recall and therefore the F1-score dropped significantly, when using the statistical or VAE preprocessing only.
+    \caption{Precision, recall, and F1-score of the SDB detection model with different preprocessing techniques. Although the precision didn't change much, the recall and therefore the F1-score dropped significantly, when using the statistical or VAE preprocessing alone.
     Important to note is that these results came from experiments with the ground-truth hypnogram, which is not the final model, as the final model uses the PPG-predicted hypnogram.}
     \label{fig:preprocessingresults}
 \end{figure}
@@ -48,7 +48,7 @@ Figure \ref{fig:preprocessingresults} shows the recall, precision, and F1-score 
 
 \subsection*{Event-level performance}
 
-Figure \ref{fig:event-metrics} shows the recall, precision, and F1-score over each threshold for the main SDB detection model, which uses the PPG-predicted hypnogram, the PPG itself with the in-model technique, and the SpO2. The Figure also shows a version of the model without the SpO2 signal, which means it relies solely on the PPG data. As can be seen, omitting the SpO2 signal has a significant impact on the performance, as the peak F1-score drops from 69.7\% to 61.6\%. The threshold for the best performance was determined to be 0.25.
+Figure \ref{fig:event-metrics} shows the recall, precision, and F1-score over each threshold for the main SDB detection model, which uses the PPG-predicted hypnogram, the PPG itself (with the in-model technique), and the SpO2. The Figure also shows a version of the model without the SpO2 signal, which means it relies solely on the PPG data. As can be seen, omitting the SpO2 signal has a significant impact on the performance, as the peak F1-score drops from 69.7\% to 61.6\%. The threshold for the best performance was determined to be 0.25.
 
 \begin{figure}
     \centering
@@ -94,13 +94,13 @@ With the threshold of 0.25, we can analyze the performance based on the event cl
     \begin{tabular}{ l p{2cm} p{2cm} p{2cm} p{2cm} }
         & Obstructive \newline Apnea & Mixed \newline Apnea & Central \newline Apnea & Hypopnea \\
         \hline
-        Total (N) & 61161 & 4811 & 15240 & 162536 \\
+        Total (N) & 61,161 & 4,811 & 15,240 & 162,536 \\
         \% of all & 25.1\% & 2.0\% & 6.3\%  &  66.7\% \\
         \hline
-        Found (N) & 43243 & 4299 & 12486 & 111826 \\
+        Found (N) & 43,243 & 4,299 & 12,486 & 111,826 \\
         \% found & 70.7\% & 89.4\% & 81.9\% & 68.8\% \\
     \end{tabular}
-    \caption{Distribution of event classes in the full dataset and how many of the different classes were detected by our model. Although the dataset is greatly imbalanced to hypopneas (2/3 of all) and against mixed apneas (only 2\%), the detection rates are greater for apneas than for hypopneas. \label{tab:event-class-distribution}}
+    \caption{Distribution of event classes in the full dataset and how many of the different classes were detected by our model. Although the dataset is greatly imbalanced towards hypopneas (2/3 of all) and against mixed apneas (only 2\%), the detection rates are greater for apneas than for hypopneas. \label{tab:event-class-distribution}}
 \end{table}
 
 In Appendix \ref{Apx-Output} we show an example of the model's output.
@@ -108,7 +108,7 @@ In Appendix \ref{Apx-Output} we show an example of the model's output.
 \subsection*{AHI-level performance}
 
 Figure \ref{fig:ahi-plots} shows the scatter plots for the predicted and true AHI values of both versions of the model. To assess agreement, Figure \ref{fig:bland-altman-plots} displays the corresponding Bland-Altman plots. Both plots show a bias towards predicting higher AHIs for the model without SpO2, while the one with PPG and SpO2 shows lower deviation and near-to-no bias. We also got a lower RMSE of 7.6 instead of 11.8 when using SpO2.
-For the model with SpO2, we achieved a Spearman rank correlation of 0.917 and an intra-class correlation of  0.91.
+For the model with SpO2, we achieved a Spearman rank correlation of 0.917, an $R^2$ of 0.833, and an intra-class correlation of 0.91.
 All AHI-level metrics and a comparison to other work can be found in Table \ref{tab:ahi-level-metrics}.
 
 \begin{figure}
@@ -157,7 +157,7 @@ Figure \ref{fig:severity-class-level-confusion-matrices} shows the confusion mat
     \label{fig:severity-class-level-confusion-matrices}
 \end{figure}
 
-We show the model's discrimination ability in Table \ref{tab:severity-class-level-metrics}, where we show binarized confusion matric results for no SDB vs SDB, mild vs moderate SDB, and moderate vs severe SDB. As before, the model with access to SpO2 performed better and NBL increased results. Most PPG + SpO2 model metrics exceed 90\% while the PPG-only model struggles especially with specificity and NPV. Likelihood ratios are also shown, achieving values of $\geq 4$ and $\leq 0.2$ for positive and negative likelihood ratios respectively in most cases, showing good diagnostic performance.
+We show the model's discrimination ability in Table \ref{tab:severity-class-level-metrics}, where we show binarized confusion matrix results for no SDB vs SDB, mild vs moderate SDB, and moderate vs severe SDB. As before, the model with access to SpO2 performed better and NBL increased results. Most PPG + SpO2 model metrics exceed 90\% while the PPG-only model struggles especially with specificity and NPV. Likelihood ratios are also shown, mostly achieving values of $\geq 4$ and $\leq 0.2$ for positive and negative likelihood ratios respectively, showing good diagnostic performance.
 
 \renewcommand{\arraystretch}{1.5}
 \begin{table}
@@ -214,7 +214,7 @@ Table \ref{tab:sleep-stage-distribution} also shows the detection rate for event
         & Wake & N1/N2 & N3 & REM \\
         \hline
         Stage \% of all nights & 33.3\% & 48.6\% & 7.5\% & 10.6\% \\
-        Stage \% of sleep & - & 72.9\% & 11.2\% & 15.9\% \\
+        Stage \% of all sleep & - & 72.9\% & 11.2\% & 15.9\% \\
         \hline
         Events (N) & 0 & 185405 & 7350 & 50993 \\
         \% of all events & - & 76.1\% & 3.0\% & 20.9\% \\
@@ -232,6 +232,6 @@ After applying the threshold for the prediction, a correction step was applied. 
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{images/CorSizeMetrics}
-    \caption{Event-level metrics for our SDB detection model for different correction sizes over the thresholds. As the precision grows with bigger correction sizes, the recall decreases. While most of both changes are somewhat evenly, there is a big difference in no correction (size of 1) to a small correction (of size 2) for the precision. Important to note is that, as with the preprocessing experiments, these results came from tests with the ground-truth hypnogram.}
+    \caption{Event-level metrics for our SDB detection model for different correction sizes over the thresholds. As the precision grows with bigger correction sizes, the recall decreases. While most of both changes are somewhat evenly, there is a big difference in no correction (size of 1) to a small correction (size of 2) for the precision. Important to note is that, as with the preprocessing experiments, these results came from tests with the ground-truth hypnogram.}
     \label{fig:correction-size}
 \end{figure}

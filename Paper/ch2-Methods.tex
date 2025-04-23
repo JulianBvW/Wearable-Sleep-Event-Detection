@@ -1,6 +1,6 @@
 \chapter{Methods \label{Chapter-Methods}}
 
-In this chapter, we describe the methods used in this work. We start with a description of the dataset used, followed by a description of the signals and preprocessing steps. We then describe the model architecture and training process, including the cross-validation strategy and evaluation metrics. Finally, we discuss the implementation details and hyperparameters used in our experiments.
+In this chapter, we describe the methods used in this work. We start with a description of the dataset used, followed by a description of the signals and preprocessing steps. We then describe the model architecture and training process, including our cross-validation strategy and evaluation metrics. Finally, we discuss the implementation details and hyperparameters used in our experiments.
 
 The full implementation of our work is available on GitHub at \url{https://github.com/JulianBvW/Wearable-Sleep-Event-Detection/}.
 
@@ -74,15 +74,15 @@ The number of different apnea classes is shown in Table \ref{tab:dataset-apnea-c
 We used the PPG and SpO2 signals from the MESA dataset, which were recorded at 256Hz and 1Hz, respectively. A third input to the model is the hypnogram from Bakker et al. \cite{bakker2021estimating}, which was predicted at $\frac{1}{30}$Hz and on PPG only, ensuring that the model still relies solely on data it can retrieve from the PPG sensor in the real world.
 We denoised the PPG signal using a lowpass filter with a cutoff frequency of 5Hz. An example of this denoising can be found in Appendix \ref{Apx-Denoise}.
 
-To analyze the importance of correct sleep stage information, we also tested a version of the model that uses the ground-truth Somnolyzer hypnogram instead of the predicted one.
+To analyze the importance of correct sleep stage information, we also tested a version of the model that uses the ground-truth Somnolyzer hypnogram instead of the predicted one, as well as a version that does not use any sleep stage information at all.
 
 \subsection*{PPG Preprocessing}
 
 To deal with the high temporal resolution of the PPG signal, we tested three different preprocessing methods that would transform the 256Hz signal into a 1Hz signal with multiple dimensions:
 
 \begin{itemize}
-    \item \textbf{Statistical}: On a 1Hz basis we extracted the mean, standard deviation, minimum, maximum, and mean peak interval of the PPG signal, resulting in a 5-dimensional representation of the PPG signal. Due to the nature of PPG showing the heartbeats at 1Hz, we used a sliding window of 5s around the 1Hz point to calculate the statistics.
-    \item \textbf{Variational Autoencoder}: The Variational Autoencoder (VAE) is an unsupervised generative model that learns to encode the input data into a lower-dimensional latent space and then reconstruct it back to the original space. The VAE consists of an encoder and a decoder, where the encoder maps the input data to a distribution in the latent space, and the decoder samples from this distribution to reconstruct the input. Using the same sliding window approach as in the statistical method, we trained the VAE to reconstruct the middle 1s from the 5s input window. With that, the encoder learns to compress the input into a lower temporal dimension while preserving the relevant information. For training the main SDB detector model, this encoder is used to transform the 256Hz PPG signal into a 1Hz signal with 8 dimensions.
+    \item \textbf{Statistical}: On a 1Hz basis we extracted the mean, standard deviation, minimum, maximum, and mean peak interval of the PPG signal, resulting in a 5-dimensional representation of the PPG signal. Due to the nature of PPG showing the heartbeats at roughly 1Hz, we used a sliding window of 5s around the 1Hz point to calculate the statistics.
+    \item \textbf{Variational Autoencoder}: The Variational Autoencoder (VAE) is an unsupervised generative model that learns to encode the input data into a lower-dimensional latent space and then reconstruct it back to the original space. The VAE consists of an encoder and a decoder, where the encoder maps the input data to a distribution in the latent space, and the decoder samples from this distribution to reconstruct the input. Using the same sliding window approach as in the statistical method, we trained the VAE to reconstruct the middle 1s from the 5s input window. With that, the encoder learns to compress the input into a lower temporal dimension while preserving the relevant information. For training the main SDB detector model, the VAE's encoder is used to transform the 256Hz PPG signal into a 1Hz signal with 8 dimensions.
     \item \textbf{In-model Convolution Stack}: While the prior methods calculated the 1Hz representation of the PPG signal before training the model, we also tested a method that would use a stack of convolutions to learn the 1Hz representation during training. The convolution stack consists of five \textit{double convolution blocks} (DCB) which are composed of two 1D convolution layers with a kernel size of 3 or 5, each followed by a batch normalization layer and ReLU activation. Between these blocks are max pooling layers with a kernel size of 4 resulting in the downsampling of the signal to 1Hz, while bringing the number of channels up from 1 to 8.
 \end{itemize}
 
@@ -90,7 +90,7 @@ Each preprocessing method brings the PPG signal down to 1Hz with multiple dimens
 
 \section{Model Architecture}
 
-The core of the detection model is an adapted version of the U-Net architecture, originally proposed for 2D image segmentation by Ronneberger et al. \cite{ronneberger2015u}. The U-Net architecture improves an encoder-decoder structure by adding skip connections between the corresponding encoder and decoder layers, which allows the model to learn both low-level and high-level features. The adapted model uses 1D convolutions on the temporal dimension instead of 2D convolutions on the width and height of images. The output of the U-Net has the same resolution as the input, which allows the model to classify each second as either part of an event or of normal breathing. This in turn allows us or the user to ze the prediction on an event level, instead of just the AHI level, which can be important, as studies showed links between apnea event duration and health that go beyond the AHI severity classifications \cite{butler2019apnea}. Figure \ref{fig:model} shows the model architecture and the DCBs, that are also used for the preprocessing VAE.
+The core of the detection model is an adapted version of the U-Net architecture, originally proposed for 2D image segmentation by Ronneberger et al. \cite{ronneberger2015u}. The U-Net architecture improves an encoder-decoder structure by adding skip connections between the corresponding encoder and decoder layers, which allows the model to learn both low-level and high-level features. The adapted model uses 1D convolutions on the temporal dimension instead of 2D convolutions on the width and height of images. The output of the U-Net has the same resolution as the input, which allows the model to classify each second as either part of an event or of normal breathing. This in turn allows us or the user to analyze the prediction on an event level, instead of just the AHI level, which can be important, as studies showed links between apnea event duration and health that go beyond the AHI severity classifications \cite{butler2019apnea}. Figure \ref{fig:model} shows the model architecture and the DCBs, that are also used for the preprocessing VAE.
 
 \begin{figure}
     \centering
@@ -102,7 +102,7 @@ The core of the detection model is an adapted version of the U-Net architecture,
 \newpage
 \subsection*{Attention mechanisms}
 
-Our model can leverage the following two types of attention:
+Our model leverages the following two types of attention:
 
 \begin{itemize}
     \item \textbf{Self-Attention in the bottleneck}: The self-attention mechanism, originally proposed by Vaswani et al. \cite{vaswani2017attention}, computes relevance vectors for each input feature through their query (Q) and key (K) matrices. By multiplicating this vector with the value matrix (V), the model learns long-range dependencies throughout the sequence, making it possible to focus on the important parts of the input data. The self-attention mechanism is computed as:
@@ -137,9 +137,9 @@ The training targets are one-dimensional vectors with the same length as the inp
 \end{equation}
 where $N$ is the number of samples (or seconds in our case), $y_i$ is the true label (0 or 1, normal or abnormal breathing), and $p_i$ is the predicted probability for sample $i$. The loss is then averaged over each batch and parsed to the optimizer, in our case the Adam optimizer with a learning rate of 0.001.
 
-As for batching, we used randomly selected 32 30-minute segments from four different recordings each to mitigate batch overfitting on the sleep patterns of a single participant.
+As for batching, we randomly selected 32 30-minute segments from four different recordings each to mitigate batch overfitting on the sleep patterns of a single participant.
 
-During testing, we used a sliding window approach, where each recording was split into 30-minute segments with a 2-minute overlap \ref{fig:slidingwindow}. Model predictions were then concatenated, disregarding each first and last minute to create the final prediction for the whole night. This approach allows us to predict recordings of arbitrary length, on which metrics like the AHI can be calculated.
+During testing, we used a sliding window approach, where each recording was split into 30-minute segments with a 2-minute overlap. Model predictions were then concatenated, disregarding each first and last minute to create the final prediction for the whole night. This approach can be seen in Figure \ref{fig:slidingwindow} and it allows us to predict recordings of arbitrary length, on which metrics like the AHI can be calculated.
 
 \begin{figure}
     \centering
@@ -202,12 +202,12 @@ Dividing the total number of apnea events by the TST (in hours) gives us the mos
     \end{equation}
     where $d_i$ is the difference between the ranks of the two AHI values for each participant, and n is the number of participants.
     The coefficient ranges from -1 to 1, where -1 indicates a perfect negative correlation, 0 indicates no correlation, and 1 indicates a perfect positive correlation.
-    \item Finally, we also calculate the \textbf{Intraclass Correlation Coefficient} (ICC), which is a measure of reliability between two or more raters, in our case the predicted and true AHI values. We use the ICC(2,1) version\footnote{specifically, we use the implementation of Pythons \texttt{pingouin} package to calculate the \texttt{ICC2, Single random raters}}, which is a two-way random effects model for absolute agreement. It ranges from 0 to 1, where 0 indicates no agreement and 1 indicates perfect agreement.
+    \item Finally, we also calculate the \textbf{Intraclass Correlation Coefficient} (ICC), which is a measure of reliability between two or more raters, in our case the predicted and true AHI values. We use the ICC(2,1) version\footnote{specifically, we use the implementation of Pythons \texttt{pingouin} package to calculate the \texttt{ICC2, Single random raters} value}, which is a two-way random effects model for absolute agreement. It ranges from 0 to 1, where 0 indicates no agreement and 1 indicates perfect agreement.
 \end{itemize}
 
 \subsubsection*{C. Severity-class-level metrics}
 
-The last set of metrics we used is the severity-class-level metrics, which are calculated on the AHI severity classes. As mentioned, the boundaries for the severity classes are defined as follows: Normal (AHI $<$ 5), Mild (5 $\le$ AHI $<$ 15), Moderate (15 $\le$ AHI $<$ 30), and Severe (AHI $\ge$ 30). As small errors in the AHI around these hard thresholds can lead to a wrong classification, we used near-boundary double-labeling (NBL), which allows us to assign two classes for AHIs that fall in the range of about 2.5 around the boundaries. Exact values can be found in Appendix \ref{Apx-NBL}.
+The last set of metrics we used is the severity-class-level metrics, which are calculated on the AHI severity classes. As mentioned, the boundaries for the severity classes are defined as follows: Normal (AHI $<$ 5), Mild (5 $\le$ AHI $<$ 15), Moderate (15 $\le$ AHI $<$ 30), and Severe (AHI $\ge$ 30). As small errors in the AHI around these hard thresholds can lead to a wrong classification, we also used near-boundary double-labeling (NBL), which allows us to assign two classes for AHIs that fall in the range of about 2.5 around the boundaries. Exact values can be found in Appendix \ref{Apx-NBL}.
 
 Using these four classes we can plot the confusion matrix and compute model \textbf{Accuray} (Acc), defined as the number of correctly classified patients divided by the total number of patients, and the \textbf{Cohen's Kappa} ($\kappa$), which is a measure of agreement between the predicted and true classes, taking into account the possibility of random agreement. Cohen's Kappa is calculated as:
 \begin{equation}
@@ -216,7 +216,7 @@ Using these four classes we can plot the confusion matrix and compute model \tex
 where $p_o$ is the observed agreement and $p_e$ is the expected agreement. Its value ranges from -1 to 1, where -1 indicates perfect disagreement, 0 indicates no agreement, and 1 indicates perfect agreement.
 
 Finally, this matrix can be binarized to assess the discrimination ability between normal to abnormal (mild-severe), mild to moderate, and moderate to severe SDB.
-Metrics on this binarized view include the \textbf{Likelihood ratios} (LR), which give insight into how much a test result changes the odds of having the disease, or in our case, the specific severity classes. These likelihoods can be computed as positive and negative likelihood ratios (LR+ and LR-), which are defined as:
+Metrics on this binarized view include the \textbf{Likelihood ratios} (LR), which give insight into how much a test result changes the odds of having the disease, or in our case, the specific severity classes. These likelihoods can be computed as positive (reliability of a positive test result) and negative (reliability of a negative test result) likelihood ratios (LR+ and LR-), which are defined as:
 
 \begin{align}
     LR+ &= \frac{Sensitivity}{1-Specificity} \\

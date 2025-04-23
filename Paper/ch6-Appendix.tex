@@ -9,13 +9,13 @@ The performance is lower than reported in the original paper, which is due to th
 \renewcommand{\arraystretch}{1.5}
 \begin{table}[h!]
     \centering
-    \begin{tabular}{ p{2.5cm} p{2cm} p{2.3cm} p{2.3cm} p{1.5cm} p{2.3cm} }
+    \makebox[\textwidth][c]{\begin{tabular}{ p{2.5cm} p{2cm} p{2.3cm} p{2.3cm} p{1.5cm} p{2.3cm} }
         Task & Kappa & Acc. & Se. & Sp. & PPV \\
         \hline
         4-cl. \newline (Wake/N1-\newline N2/N3/REM) & 0.566 \newline [0.436, 0.677] & 73.2\%\newline [64.8\%, 80.0\%] & - & - & - \\
         3-cl. \newline (Wake/NREM\newline/REM) & 0.628 \newline [0.473, 0.740] & 79.4\%\newline [70.8\%, 85.6\%] & - & - & - \\
         2-cl. \newline (Wake/Sleep) & 0.653 \newline [0.475, 0.778] & 84.6\% \newline [76.2\%, 90.3\%] & 73.1\% \newline [56.9\%, 84.9\%] & 91.8\% \newline (8.37\%) & 89.6\% \newline [79.0\%, 95.2\%] \\
-    \end{tabular}
+    \end{tabular}}
     \caption{PPG-based sleep stage prediction performances against Somnolyzer scorings on different tasks. Values are presented as median and 25th and 75th percentiles, median [Q1, Q2], or (in case of normally distributed data) as mean and standard deviation, mean (sd). \label{tab:predicted-hypnogram-results}}
 \end{table}
 
@@ -75,7 +75,7 @@ In NBL, single AHIs can get assigned to a second severity class, if they are nea
 
 \begin{figure}[h!]
     \centering
-    \includegraphics[width=1.2\textwidth]{images/ModelOutput}
+    \makebox[\textwidth][c]{\includegraphics[width=1.2\textwidth]{images/ModelOutput}}
     \caption{Example of the model outputs: Top and bottom rows (red) show the true labels (event or not); the second row (blue) shows the predicted probabilities of the model's sigmoid layer; the third row (blue) shows an applied example threshold of 0.3; the fourth row (blue) shows the thresholded predictions after the correction step. One can see, how the correction step merges close events (e.g. the first event from the left) and removes too short events (e.g. the event around the second 7300).}
     \label{fig:example-output}
 \end{figure}

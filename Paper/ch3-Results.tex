@@ -162,7 +162,7 @@ We show the model's discrimination ability in Table \ref{tab:severity-class-leve
 \renewcommand{\arraystretch}{1.5}
 \begin{table}
     \centering
-    \begin{tabular}{ p{1.5cm} p{2cm} p{1cm} p{1cm} p{1cm} p{1cm} p{1cm} p{1cm} p{1cm} }
+    \makebox[\textwidth][c]{\begin{tabular}{ p{1.5cm} p{2cm} p{1cm} p{1cm} p{1cm} p{1cm} p{1cm} p{1cm} p{1cm} }
         Min. \newline Sev. & N $\geq$ thr \newline (\% $\geq$ thr)  & Acc. & Sens. & Spec. & PPV & NPV & LR+ & LR- \\
         \hline
         \hline
@@ -190,7 +190,7 @@ We show the model's discrimination ability in Table \ref{tab:severity-class-leve
         Mild & 1625 (86\%) & 0.938 & 0.974 & 0.714 & 0.956 & 0.809 & 3.401 & 0.037 \\
         Moderate & 997 (53\%) & 0.859 & 0.943 & 0.764 & 0.819 & 0.922 & 4.002 & 0.075 \\
         Severe & 462 (25\%) & 0.886 & 0.905 & 0.880 & 0.711 & 0.966 & 7.547 & 0.108 \\
-    \end{tabular}
+    \end{tabular}}
     \caption{Diagnostic performance of our models. The best values all come from the PPG + SpO2 model with NBL. \label{tab:severity-class-level-metrics}}
 \end{table}
 

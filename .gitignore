@@ -1,5 +1,6 @@
 *.out
 *.pth
+wearsed/evaluation/output/*
 wearsed/training/*/output/*
 wearsed/training/*/output*/*
 wearsed/training/*/*/*.csv

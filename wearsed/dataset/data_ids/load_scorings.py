@@ -49,8 +49,8 @@ def load_scorings_nsrr(mesa_root, id):
     event_df.to_csv(mesa_root + f'scorings/nsrr/events/events-{id:04}.csv', index=False)
     event_list.to_csv(mesa_root + f'scorings/nsrr/event_list/event-list-{id:04}.csv', index=False)
 
-def load_scorings_somnolyzer(mesa_root, id):
-    root = etree.parse(mesa_root + f'somnolyzer_scorings/mesa-sleep-{id:04}.rml').getroot()
+def load_scorings_somnolyzer(scoring_files_root, id, file_prefix='mesa-sleep-'):
+    root = etree.parse(scoring_files_root + f'somnolyzer_scorings/{file_prefix}{id:04}.rml').getroot()
     scoring_root = root.find('{http://www.respironics.com/PatientStudy.xsd}ScoringData')
 
     hypnogram = read_hypnogram(scoring_root.find('{http://www.respironics.com/PatientStudy.xsd}StagingData').find('{http://www.respironics.com/PatientStudy.xsd}MachineStaging').find('{http://www.respironics.com/PatientStudy.xsd}NeuroAdultAASMStaging'))
@@ -77,9 +77,9 @@ def load_scorings_somnolyzer(mesa_root, id):
         'End': event_list_end
     })
 
-    hypnogram.to_csv(mesa_root + f'scorings/somnolyzer/hypnogram/hypnogram-{id:04}.csv', header=False, index=False)
-    event_df.to_csv(mesa_root + f'scorings/somnolyzer/events/events-{id:04}.csv', index=False)
-    event_list.to_csv(mesa_root + f'scorings/somnolyzer/event_list/event-list-{id:04}.csv', index=False)
+    hypnogram.to_csv(scoring_files_root + f'scorings/somnolyzer/hypnogram/hypnogram-{id:04}.csv', header=False, index=False)
+    event_df.to_csv(scoring_files_root + f'scorings/somnolyzer/events/events-{id:04}.csv', index=False)
+    event_list.to_csv(scoring_files_root + f'scorings/somnolyzer/event_list/event-list-{id:04}.csv', index=False)
 
 
 

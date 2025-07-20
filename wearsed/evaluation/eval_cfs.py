@@ -33,7 +33,7 @@ def get_test_batch(datapoint, seq_length, overlap_window):
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Output folder
-OUTPUT_DIR = f'wearsed/evaluation/output/with_scorings/'
+OUTPUT_DIR = f'wearsed/evaluation/output/pred_hypno/'
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Load Dataset and Model

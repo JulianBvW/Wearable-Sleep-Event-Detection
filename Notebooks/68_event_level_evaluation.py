@@ -4,7 +4,8 @@ from tqdm import tqdm
 import pandas as pd
 
 runs = [
-    ('with_scorings')
+    'with_scorings',
+    'pred_hypno'
 ]
 
 run_list = []

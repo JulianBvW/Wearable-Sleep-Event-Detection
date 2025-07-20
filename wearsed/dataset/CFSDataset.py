@@ -1,12 +1,15 @@
 from wearsed.dataset.utils import RESP_EVENT_TYPES
 from torch.utils.data import Dataset
 import pandas as pd
+import numpy as np
 import pyedflib
 import torch
 import os
 
 class CFSDataset(Dataset):
-    def __init__(self, cfs_id_path='wearsed/dataset/data_ids/'):
+    def __init__(self, cfs_id_path='wearsed/dataset/data_ids/', use_predicted_hypnogram=True):
+        self.use_predicted_hypnogram = use_predicted_hypnogram
+
         if not os.path.isfile(cfs_id_path + 'cfs_root.txt') or not os.path.isfile(cfs_id_path + f'cfs_ids.csv'):
             raise Exception(f'CFS IDs not loaded. Run `wearsed/dataset/data_ids/load_cfs.py <CFS ROOT PATH>`.')
     
@@ -24,7 +27,7 @@ class CFSDataset(Dataset):
     def __getitem__(self, idx):
         cfs_id = self.get_cfs_id(idx)
         psg = self.load_psg(cfs_id)
-        hypnogram = pd.read_csv(self.cfs_root + f'scorings/somnolyzer/hypnogram/hypnogram-{cfs_id}.csv', header=None)[0]
+        hypnogram = self.load_hypnogram(cfs_id)
 
         # Inputs
         hypnogram = torch.Tensor(hypnogram)
@@ -52,3 +55,14 @@ class CFSDataset(Dataset):
         edf_reader.close()
 
         return {'SpO2': spo2, 'PPG': ppg}
+
+    def load_hypnogram(self, cfs_id):
+        if self.use_predicted_hypnogram:
+            predicted_hypnogram = pd.read_csv(self.cfs_root + f'predicted_hypnogram/cfs-{cfs_id}-1.csv', index_col='ts')['PPG_4cl']
+            predicted_hypnogram[predicted_hypnogram == 'W'] = 0
+            predicted_hypnogram[predicted_hypnogram == 'N1/N2'] = 1
+            predicted_hypnogram[predicted_hypnogram == 'N3'] = 3
+            predicted_hypnogram[predicted_hypnogram == 'R'] = 5
+            return pd.Series(np.repeat(predicted_hypnogram.values, 30))
+
+        return pd.read_csv(self.cfs_root + f'scorings/somnolyzer/hypnogram/hypnogram-{cfs_id}.csv', header=None)[0]

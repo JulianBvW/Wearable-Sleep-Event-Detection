@@ -1,20 +1,39 @@
 # Wearable-Sleep-Event-Detection
-Sleep Apnea is a breathing disorder affecting roughly 10% of the adult population, where breathing can stop periodically during the night, resulting in bad sleep and other side effects.
-These resipiratory events are defined as a complete (>90%, apnea) or partial (>30%, hypopnea) reductions in airflow while sleeping.
+**Sleep Apnea** is a breathing disorder affecting **roughly 10% of the adult population**, where breathing can stop periodically during the night, resulting in bad sleep and other side effects.
+These resipiratory events are defined as complete (>90%, apnea) or partial (>30%, hypopnea) reductions in airflow during sleep.
 Apnea can further be divided into central (the brain fails to send breathing signals to the muscles) or obstructive (blockage in airway canal) apnea.
+
 The gold standard to detecting sleep events is a human-rated PSG (Polysomnography), measuring many signals including brain, eye, muscle, and heart activity, airflow, leg movements, blood oxygen levels, etc.
-Due to the hard and costly setup, an estimated 80% of cases are unrecognized.
+Due to the hard and costly setup, an estimated 80% of sleep apnea cases are unrecognized.
 
-This work tries to create a machine learning model, that can precisely detect and classify sleep-related events on wearable, easy-to-use, and comfortable measurement devices like a finger clip that can record SpO2 levels (blood oxygen saturation) and photoplethysmography (PPG, blood vessel volume).
+In this work we created a deep learning model, that can detect apnea events from easy-to-aquire sginals like SpO2 levels (blood oxygen saturation) and photoplethysmography (PPG, blood vessel volume). As the wearable measurement devices (e.g. finger-worn sensor, smart watch, smart ring) for these signals are very comfortable and cheap, our model could help with screening for the huge number of undiagnosed sleep apnea cases.
 
-## Task Description
+## Results
 
-**Detection of Sleep Events using Machine Learning Models on Wearable Sensor Modalities**
+We achieved a peak event detection F1-score of 70% when using PPG and SpO2, and 61% with only PPG as input (useful with devices that cannot measure SpO2 reliably like smart watches).
 
-After a statistical analysis of the given data to find out relations between demographics data (age, sex, ...), sleep stages and forms of sleep-related events, the goal is to create a Machine Learning Model, for example based on Transformer architectures, that can detect sleep events, like Arousals, (obstructive vs. central) Apneas, or Hypopneas, from a minimal set of sensor modalities that can theoretically be acquired using simple, wearable hardware for home use.
-In contrast with most literature on the topic, where classification is performed based on epochs of a long duration (e.g. 1 minute), we will explore the use of higher output sampling (e.g. 2 Hz), allowing us to more accurately detect the start and end of each event interval. Performance will be evaluated against events scored based on PSG, both in terms of event detection (sensitivity, positive predictive value, etc) and in terms of agreement with aggregated metrics, such as AHI, arousal index, etc.
+When looking at AHI (events per hour of sleep) correlation, we achieved Spearman's rank correlation coefficient of 0.917 and ICC of 0.91 with little to no bias.
 
-## Installation
+<img width="736" height="359" alt="image" src="https://github.com/user-attachments/assets/bc455c2f-af89-431e-8e14-fba3bca74c49" />
+
+**TBA**: Evaluation results
+
+## Datasets
+
+We used the [MESA](https://sleepdata.org/datasets/mesa) dataset as train and test set, with just under 1900 overnight recordings.
+For evaluation we used the [CFS](https://sleepdata.org/datasets/cfs) dataset with around 300 recordings.
+
+## Architecture
+
+The model is a modified U-Net with Attention mechanism baked into it.
+As input, we used the raw PPG-signal, a PPG-predicted hypnogram (using the work from [Bakker et al.](https://pubmed.ncbi.nlm.nih.gov/33660612/)), and optionally SpO2.
+The output is a 1D tensor that shows event probabilities at 1Hz.
+
+<img width="550" height="616" alt="image" src="https://github.com/user-attachments/assets/c1176c16-6ffd-457d-962e-2d8af3d354f5" />
+
+## Usage
+
+### Installation
 
 Create a conda environment:
 ```bash
@@ -28,23 +47,20 @@ pip install numpy pandas tqdm pyEDFlib lxml matplotlib torch torchvision torchau
 pip install -e .
 ```
 
-## Roadmap
+### Training
 
-- [X] Request data access for [MESA](https://sleepdata.org/datasets/mesa) and [CFS](https://sleepdata.org/datasets/cfs) dataset
-- [X] Create dataloader and do first tests with visuals
-- [ ] Read some literature [15/20]
-- [X] Statistical analyses between events, arousals, demographic data, sleep stages, etc.
-- [X] Create simple model and training code (for example CNN) to get first results on binary classification (Event vs. No Event) at 1 Hz with SpO2, PPG, and GT Hypnogram
-- [ ] Increase complexity for the label by distinguishing between more labels like apnea vs. hypopnea and obstructive vs. central or arousals
-- [ ] Integrate new event scoring data to get central apnea labels (currently missing in the MESA scoring)
-- [ ] Increase model complexity by using different architectures, like Transformers
-- [ ] Transition to PPG-generated hypnogram or sleep-wake-detector instead of ground truth hypnogram
-- [ ] Analyse dependency on singals: Is PPG maybe enough and you can ignore SpO2? Is artigraphy data needed?
-- [ ] Write the paper
+To load the datasets, run `python wearsed/dataset/data_ids/load_<mesa or cfs>.py <path to mesa or cfs root>`.
+Then, the dataset classes in `wearsed/dataset/` are able to load the recordings.
 
-## PSG Signals
+In `slurm/scripts/` you can find a selection of scripts for training the model and the code in `wearsed/training/` shows how to use the model.
 
-Signal | Description | Frequency (Hz) | #Measurements
+### Evaluation
+
+**TBA**: Add evaluation help
+
+## MESA PSG Signals
+
+Signal | Description | Frequency (Hz) | #Measurements in example recording
 --- | --- | --: | --:
 `EKG`       | Heart Activity |  256 | 11058944
 `EOG-L`     | Movement of left Eye |  256 | 11058944

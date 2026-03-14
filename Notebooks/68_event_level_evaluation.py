@@ -4,8 +4,14 @@ from tqdm import tqdm
 import pandas as pd
 
 runs = [
-    'with_scorings',
-    'pred_hypno'
+    # 'with_scorings',
+    # 'pred_hypno_v2',
+    # 'no_spo2_f0',
+    # 'no_spo2_f1',
+    # 'no_spo2_f2',
+    # 'no_spo2_f3',
+    'train_fully_default',
+    'train_fully_no_spo2'
 ]
 
 run_list = []
@@ -37,4 +43,4 @@ df = pd.DataFrame({
     'recall': rec_list
 })
 df['f1'] = (2 * df['precision'] * df['recall']) / (df['precision'] + df['recall'])
-df.to_csv('Notebooks/68_event_level_evaluation.csv', index=False)
+df.to_csv('Notebooks/68_event_level_evaluation_train_fully.csv', index=False)

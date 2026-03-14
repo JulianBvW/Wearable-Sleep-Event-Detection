@@ -3,7 +3,7 @@ Evaluation code for the Attention U-Net model on the CFS dataset
 '''
 
 from wearsed.dataset.CFSDataset import CFSDataset
-from wearsed.models.attention_unet.AttentionUNet import AttentionUNet
+from wearsed.models.attention_unet.AttentionUNet_no_spo2 import AttentionUNet
 
 from tqdm import tqdm
 import pandas as pd
@@ -33,13 +33,13 @@ def get_test_batch(datapoint, seq_length, overlap_window):
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Output folder
-OUTPUT_DIR = f'wearsed/evaluation/output/train_fully_default/'
+OUTPUT_DIR = f'wearsed/evaluation/output/train_fully_no_spo2/'
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Load Dataset and Model
 dataset = CFSDataset()
 model = AttentionUNet().to(device)
-model.load_state_dict(torch.load('wearsed/training/attention_unet/output/train_fully_default/f-0/model_final.pth', weights_only=True))
+model.load_state_dict(torch.load('wearsed/training/attention_unet/output/train_fully_no_spo2/f-0/model_final.pth', weights_only=True))
 model.eval()
 
 # Evaluation
